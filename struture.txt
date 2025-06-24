@@ -1,0 +1,31 @@
+Guia-Identificacao-Tipos-de-Violencias/
+├── README.md               # Documentação do projeto
+├── main.py                 # Ponto de entrada da aplicação Streamlit
+├── form.py                 # Componentes de formulário para interface
+├── requirements.txt        # Dependências do projeto
+│
+├── engine/                 # Motor de inferência
+│   ├── __init__.py
+│   ├── expert_system.py    # Classe principal do sistema especialista
+│   ├── facts.py            # Definições de fatos para o Experta
+│   └── rules.py            # Regras de inferência
+│
+├── knowledge_base/         # Base de conhecimento estruturada
+│   ├── __init__.py
+│   ├── violence_types.py   # Definições dos tipos de violência
+│   ├── recommendations.py  # Recomendações e encaminhamentos
+│   └── explanations.py     # Textos explicativos para o módulo de explicabilidade
+│
+├── utils/                  # Funções auxiliares
+│   ├── __init__.py
+│   ├── text_processor.py   # Processamento de texto para análise
+│   └── report_generator.py # Geração de relatórios explicativos
+│
+├── tests/                  # Testes do sistema
+│   ├── __init__.py
+│   ├── test_rules.py       # Testes para as regras
+│   ├── test_inference.py   # Testes para o motor de inferência
+│   └── test_cases.py       # Casos de teste para diferentes cenários
+│
+└── docs/                   # Documentação adicional
+    └── guia_violencia.pdf  # O guia de referência
