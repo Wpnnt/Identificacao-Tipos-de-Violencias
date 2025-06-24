@@ -1,4 +1,8 @@
 import streamlit as st
+from engine.expert_system import ExpertSystem
+from engine.facts import ViolenceRelact
+from form import *
+
 
 st.set_page_config(
     page_title="Sistema Especialista",
@@ -6,46 +10,38 @@ st.set_page_config(
     layout="centered",
     initial_sidebar_state="collapsed"
 )
+st.title("Sistema Especialista de Identificação de Violência")
 
-st.markdown("<h1>Guia de tipos de violencia</h1>", unsafe_allow_html=True)
+#====================formulario========================
 
-user_input = st.text_input("Entrada: ")
-
-# função de debug
-if user_input:
-    st.write(f"Você: {user_input}")
-
-#ter que usar o spacy pra interpretar o texto do usuario e separar os dados coletados
-#def spacy_interpreter(text):
+user_type_action = ask_type_action()
+user_context = ask_context()
+user_target = ask_target()
 
 
-#codigo recomendado pelo gepeto, precisa ser testado e traduzido para ingles
-"""
-import spacy
-from engine.facts import RelatoDeViolencia
+#====================processamento========================
 
-nlp = spacy.load("pt_core_news_sm")
-
-def interpretar_com_spacy(texto):
-    doc = nlp(texto.lower())
-    
-    # Define palavras-chave possíveis para cada campo
-    acoes = ["piada", "comentário", "perseguir", "insulto", "ameaça"]
-    contextos = ["trabalho", "escola", "ambiente público"]
-    alvos = ["mulher", "minorias", "negro", "pessoa com deficiência", "lgbt"]
-
-    campos = {"tipo_acao": None, "contexto": None, "alvo": None}
-
-    for token in doc:
-        if token.text in acoes:
-            campos["tipo_acao"] = token.text
-        elif token.text in contextos:
-            campos["contexto"] = token.text
-        elif token.text in alvos:
-            campos["alvo"] = token.text
-
-    if any(v is not None for v in campos.values()):
-        return RelatoDeViolencia(**{k: v for k, v in campos.items() if v is not None})
+if st.button("Avaliar"):
+    if not user_type_action or not user_context or not user_target:
+        st.error("Por favor, preencha todas as informações.")
     else:
-        return None
-"""
+        
+        engine = ExpertSystem()
+        engine.reset() #reseta o motor de inferência antes de cada avaliação
+
+        for action in user_type_action:
+            for t in user_target:
+                engine.declare(ViolenceRelact(
+                    action_type=action, 
+                    context=user_context, 
+                    target=t
+                ))
+
+        engine.run()
+
+        if engine.results:
+            st.success("Resultados encontrados: ")
+            for r in engine.results:
+                st.markdown(f"- {r}")
+        else:
+            st.info("nenhum tipo de violencia identificado com base nas informações fornecidas.")
