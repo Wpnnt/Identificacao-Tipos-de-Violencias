@@ -121,7 +121,7 @@ VIOLENCE_TYPES = {
 }
 
 # Definição da gravidade e procedimentos gerais
-GRAVIDADE_NIVEIS = {
+SEVERITY_LEVEL = {
     "baixa": "Comportamento inadequado que requer atenção e orientação.",
     "baixa_cumulativa": "Comportamentos que individualmente são de baixa gravidade, mas podem causar danos significativos quando repetidos.",
     "media_baixa": "Violação que requer intervenção e possível advertência.",
@@ -132,7 +132,7 @@ GRAVIDADE_NIVEIS = {
 }
 
 # Canais de denúncia e suas descrições
-CANAIS_DENUNCIA = {
+REPORT_CONTACT = {
     "Ouvidoria": {
         "descricao": "Órgão responsável por receber denúncias e encaminhá-las.",
         "contato": "ouvidoria@ufape.edu.br",

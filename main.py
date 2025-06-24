@@ -1,6 +1,6 @@
 import streamlit as st
 from engine.expert_system import ExpertSystem
-from engine.facts import ViolenceRelact
+from engine.facts import *
 from form import *
 
 
@@ -42,6 +42,7 @@ if st.button("Avaliar"):
         if engine.results:
             st.success("Resultados encontrados: ")
             for r in engine.results:
-                st.markdown(f"- {r}")
+                #st.markdown(f"- {r}")
+                print_information(r)
         else:
             st.info("nenhum tipo de violencia identificado com base nas informações fornecidas.")

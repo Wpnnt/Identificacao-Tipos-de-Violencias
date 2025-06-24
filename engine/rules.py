@@ -5,8 +5,8 @@ class ViolenceRules:
 
     @Rule(ViolenceRelact(action_type="piada", context="trabalho", target="genero"))
     def gender_moral_harassment(self):
-        self.add_results("Assédio moral de gênero")
+        self.add_results("assedio_moral_genero")
 
     @Rule(ViolenceRelact(action_type="comentario", context="ambiente público", target="minorias"))
     def microagression(self):
-        self.add_results("Microagressão")
+        self.add_results("microagressao")
