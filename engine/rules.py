@@ -3,10 +3,10 @@ from .facts import ViolenceRelact
 
 class ViolenceRules:
 
-    @Rule(ViolenceRelact(action_type="piada", context="trabalho", target="mulher"))
+    @Rule(ViolenceRelact(action_type="piada", context="trabalho", target="genero"))
     def gender_moral_harassment(self):
         self.add_results("Assédio moral de gênero")
 
-    @Rule(ViolenceRelact(action_type="comentario", contex="ambiente público", target="minorias"))
+    @Rule(ViolenceRelact(action_type="comentario", context="ambiente público", target="minorias"))
     def microagression(self):
         self.add_results("Microagressão")

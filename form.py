@@ -14,7 +14,7 @@ def ask_type_action():
 
 def ask_context():
     st.subheader("Contexto da situação")
-    return st.selectbox("Onde isso aconteceu?", ["", "trabalho", "escola", "ambiente público", "casa", "outro"])
+    return st.selectbox("Onde isso aconteceu?", ["", "trabalho", "escola", "ambiente publico", "casa", "outro"])
 
 def ask_target():
     st.subheader("Você acredita que foi alvo disso por: ")
