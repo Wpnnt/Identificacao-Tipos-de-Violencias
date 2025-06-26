@@ -1,4 +1,4 @@
-import streamlit as st
+import streamlit as st # type: ignore
 from engine.expert_system import ExpertSystem
 from engine.facts import *
 from form import *
