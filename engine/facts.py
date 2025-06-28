@@ -1,14 +1,14 @@
 from experta import Fact, Field
 from knowledge_base.violence_types import VIOLENCE_TYPES, SEVERITY_LEVEL, REPORT_CONTACT
+from knowledge_base.confidence_levels import *
 import streamlit as st # type: ignore
 
 """Depois separar em um arquivo para cada classe"""
 
 class ViolenceRelact(Fact):
-    """
-    Representa o relato que o usuário fez sobre a violência.
-    Cada campo corresponde a uma informação coletada no formulário.
-    """
+    #Representa o relato que o usuário fez sobre a violência.
+    #Cada campo corresponde a uma informação coletada no formulário.
+    
     action_type = Field(str, mandatory=True)  # Tipo de comportamento/ação
     frequency = Field(str)  # Frequência da ocorrência
     context = Field(str)  # Contexto onde ocorreu
@@ -21,10 +21,9 @@ class ViolenceRelact(Fact):
     confidence = Field(float, default=0.0)  # Nível de confiança (0.0 a 1.0)
 
 class ViolenceClassification(Fact):
-    """
-    Representa o resultado da classificação de uma violência.
-    Será criado pelo motor de inferência ao identificar um tipo de violência.
-    """
+    #Representa o resultado da classificação de uma violência.
+    #Será criado pelo motor de inferência ao identificar um tipo de violência.
+    
     violence_type = Field(str, mandatory=True)  # Tipo principal de violência
     subtype = Field(str, default=None)  # Subtipo (se aplicável)
     confidence_level = Field(float, default=0.0)  # Nível de confiança na classificação (0-1)
@@ -32,10 +31,9 @@ class ViolenceClassification(Fact):
     explanation = Field(list, default=[])  # Lista de explicações sobre a classificação
 
 class AnalysisResult(Fact):
-    """
-    Armazena o resultado final da análise com todos os tipos de violência 
-    identificados e suas pontuações
-    """
+    #Armazena o resultado final da análise com todos os tipos de violência 
+    #identificados e suas pontuações
+
     classifications = Field(list, default=[])  # Lista de ViolenceClassifications
     primary_result = Field(str, default=None)  # Resultado principal (maior pontuação)
     multiple_types = Field(bool, default=False)  # Indica se foram encontrados múltiplos tipos
@@ -75,21 +73,21 @@ def calculate_confidence(score, threshold, max_possible_score):
     FAIXA 1 - Abaixo do Limiar (0% a 50%):
     Se a pontuação não atingiu o mínimo necessário, a confiança é proporcional
     ao progresso em direção ao limiar.
-    Fórmula: (pontuação_atual / limiar_mínimo) × 0.5
+    Fórmula: (pontuação_atual / limiar_mínimo) x 0.5
     
     Exemplo: Limiar = 15, Pontuação = 10
-    Confiança = (10/15) × 0.5 = 0.33 (33%)
+    Confiança = (10/15) x 0.5 = 0.33 (33%)
     
     FAIXA 2 - Acima do Limiar (50% a 100%):
     A confiança base é 50% (por ter atingido o mínimo), mais uma confiança
     adicional proporcional ao quanto excede o limiar em relação ao máximo possível.
     
-    Fórmula: 0.5 + ((pontos_excedentes / máximo_excedente_possível) × 0.5)
+    Fórmula: 0.5 + ((pontos_excedentes / máximo_excedente_possível) x 0.5)
     
     Exemplo: Limiar = 15, Pontuação = 22, Máximo = 35
     - Pontos excedentes = 22 - 15 = 7
     - Máximo excedente = 35 - 15 = 20
-    - Confiança adicional = (7/20) × 0.5 = 0.175
+    - Confiança adicional = (7/20) x 0.5 = 0.175
     - Confiança total = 0.5 + 0.175 = 0.675 (67.5%)
     
     Interpretação dos Resultados:
@@ -125,11 +123,37 @@ def calculate_confidence(score, threshold, max_possible_score):
             return round(base_confidence + additional_confidence, 2)
         return base_confidence
 
+def get_threshold(violence_type, subtype=None):
+    """
+    Retorna o limiar mínimo de pontos para considerar a classificação válida.
+
+    Se o tipo de violência tiver subtipos, busca o limiar específico. 
+    Caso contrário, retorna o valor direto.
+    """
+    if subtype and violence_type in CLASSIFICATION_THRESHOLDS:
+        subtipo_dict = CLASSIFICATION_THRESHOLDS.get(violence_type)
+
+        if isinstance(subtipo_dict, dict):
+            return subtipo_dict.get(subtype, 0)
+        
+    valor = CLASSIFICATION_THRESHOLDS.get(violence_type)
+
+    return valor if isinstance(valor, int) else 0
+
+def get_max_score(violence_type, subtype=None):
+    """
+    Retorna a pontuação máxima teórica possível para um tipo de violência.
+    Se o tipo possuir subtipos, retorna a pontuação do subtipo.
+    """
+    if subtype and violence_type in MAX_POSSIBLE_SCORES:
+        subtipo_dict = MAX_POSSIBLE_SCORES.get(violence_type)
+        if isinstance(subtipo_dict, dict):
+            return subtipo_dict.get(subtype, 0)
+
+    valor = MAX_POSSIBLE_SCORES.get(violence_type)
+    return valor if isinstance(valor, int) else 0
+
 def print_information(violence_type, subtype=None, confidence=None):
-    """
-    Apresenta informações sobre um tipo de violência identificado.
-    Versão aprimorada que suporta subtipos e mostra nível de confiança.
-    """
     info = VIOLENCE_TYPES.get(violence_type)
     if not info:
         st.warning("Informações adicionais não disponíveis.")
@@ -153,12 +177,10 @@ def print_information(violence_type, subtype=None, confidence=None):
     
     st.markdown(f"**Definição:** {definition}")
 
-    # Exibe gravidade
     severity = info.get('gravidade')
     if severity:
         st.markdown(f"**Gravidade:** {SEVERITY_LEVEL.get(severity, '')}")
 
-    # Exibe canais de denúncia
     contacts = info.get("canais_denuncia", [])
     if contacts:
         st.markdown("**Canais de denúncia:**")
@@ -170,22 +192,13 @@ def print_information(violence_type, subtype=None, confidence=None):
                     st.markdown(f"  📧 Contato: `{contact_info['contato']}`")
                 st.markdown(f"  📌 Procedimento: {contact_info.get('procedimento')}")
 
-    # Exibe recomendações
     recommendations = info.get("recomendacoes", [])
     if recommendations:
         st.markdown("**Recomendações:**")
         for r in recommendations:
             st.markdown(f"- {r}")
 
-
-
-
-
-
-
-
-
-
+"""
 def print_information(violence_type):
     info = VIOLENCE_TYPES.get(violence_type)
     if not info:
@@ -213,3 +226,4 @@ def print_information(violence_type):
         st.markdown("**Recomendações:**")
         for r in recommendations:
             st.markdown(f"- {r}")
+"""

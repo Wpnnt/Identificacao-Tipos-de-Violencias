@@ -1,7 +1,5 @@
-"""
-Define os níveis de confiança, limiares e sistemas de pesos para classificação
-de tipos de violência.
-"""
+#Define os níveis de confiança, limiares e sistemas de pesos para classificação
+#de tipos de violência.
 
 from knowledge_base.violence_types import VIOLENCE_TYPES, SEVERITY_LEVEL
 

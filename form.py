@@ -4,42 +4,31 @@ def ask_type_action():
     st.subheader("Tipo de ação observada")
     options = []
 
-    if st.checkbox("Alguém fez uma piada com você?"):
-        options.append("piada")
-    if st.checkbox("Alguém fez um comentário ofensivo ou esteoripado sobre você?"):
-        options.append("comentario")
-    if st.checkbox("Voce se sentiu vigiado(a), perseguido(a) ou intimidado(a)?"):
-        options.append("perseguir")
+    if st.checkbox("Piadas ou comentários sobre estereótipos"):
+        options.append("Piadas ou comentários sobre estereótipos")
+
+    if st.checkbox("Perseguição ou vigilância constante"):
+        options.append("Perseguição ou vigilância constante")
+
+    if st.checkbox("Exclusão ou restrição de participação"):
+        options.append("Exclusão ou restrição de participação")
+
     return options
 
 def ask_context():
     st.subheader("Contexto da situação")
-    return st.selectbox("Onde isso aconteceu?", ["", "trabalho", "escola", "ambiente publico", "casa", "outro"])
+    return st.selectbox("Onde isso aconteceu?", [
+        "", 
+        "Espaço público no campus", 
+        "Ambiente administrativo", 
+        "Sala de aula"
+    ])
 
 def ask_target():
-    st.subheader("Você acredita que foi alvo disso por: ")
-    target = []
-
-    if st.checkbox("Ser mulher?"):
-        target.append("genero")
-    if st.checkbox("Pertencer ao grupo LGBTQIA+?"):
-        target.append("genero")
-    if st.checkbox("Ter uma cor de pele diferente do agressor?"):
-        target.append("minoria")
-    if st.checkbox("Ser uma pessoa com algum tipo de deficiência?"):
-        target.append("minoria")
-    return target
-
-    #versão mais especifica, é melhor seguir com ela no futuro:
-    """
-    #aqui talvez seja interessante adicionar/mudar alguma coisa
-    if st.checkbox("Ser mulher?"):
-        target.append("genero")
-    if st.checkbox("Pertencer ao grupo LGBTQIA+?"):
-        target.append("genero")
-    if st.checkbox("Ter uma cor de pele diferente do agressor?"):
-        target.append("raça")
-    if st.checkbox("Ser uma pessoa com algum tipo de deficiência?"):
-        target.append("deficiencia")
-    return target
-    """
+    st.subheader("Você acredita que foi alvo disso por:")
+    options = []
+    if st.checkbox("Gênero"):
+        options.append("Gênero")
+    if st.checkbox("Raça ou etnia"):
+        options.append("Raça ou etnia")
+    return options
