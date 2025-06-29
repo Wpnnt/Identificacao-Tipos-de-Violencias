@@ -48,28 +48,4 @@ if st.button("Avaliar"):
         else:
             st.info("Nenhum tipo de violência identificado com base nas informações fornecidas.")
 
-        """
-        engine = ExpertSystem()
-        engine.reset() #reseta o motor de inferência antes de cada avaliação
-
-        for action in user_type_action:
-            for t in user_target:
-                engine.declare(ViolenceRelact(
-                    action_type=action, 
-                    context=user_context, 
-                    target=t
-                ))
-
-        engine.run()
-
-    if engine.results:
-        st.success("Resultados encontrados: ")
-        for r in engine.results:
-            subtype = r["subtype"].replace("_", " ").capitalize()
-            confidence_pct = round(r["confidence"] * 100)
-            st.markdown(f"- **{subtype}** (Confiança: **{confidence_pct}%**)")
-        else:
-            st.info("nenhum tipo de violencia identificado com base nas informações fornecidas.")
-
-"""
 
