@@ -1,16 +1,13 @@
 import os
 import streamlit as st # type: ignore
 from engine.expert_system import ExpertSystem
-from engine.facts import *
-from engine.text_processor import TextProcessor
-from utils.groq_integration import GroqAPI
 from knowledge_base.violence_types import VIOLENCE_TYPES
 
-# Inicializar o processador de texto com a API do Groq
+# Inicializar o sistema especialista
 @st.cache_resource
-def get_text_processor():
+def get_expert_system():
     api_key = st.secrets.get("GROQ_API_KEY", os.environ.get("GROQ_API_KEY", ""))
-    return TextProcessor(api_key=api_key)
+    return ExpertSystem(api_key=api_key)
 
 st.set_page_config(
     page_title="Sistema Especialista",
@@ -34,7 +31,7 @@ if 'partial_facts' not in st.session_state:
 if 'results' not in st.session_state:
     st.session_state.results = []
 
-processor = get_text_processor()
+expert_system = get_expert_system()
 
 # Interface do usuário baseada no estado atual
 if st.session_state.state == 'initial':
@@ -51,21 +48,13 @@ if st.session_state.state == 'initial':
             st.error("Por favor, forneça um relato mais detalhado para análise.")
         else:
             with st.spinner("Analisando seu relato..."):
-                result = processor.process_user_text(user_text)
+                # Usar o sistema especialista em vez do processador diretamente
+                result = expert_system.analyze_text(user_text)
                 
-                if result['status'] == 'incomplete':
-                    # Se faltam informações críticas, pedir mais detalhes
-                    st.session_state.keywords = result['identified_keywords']
-                    st.session_state.questions = result['questions']
-                    st.session_state.missing_fields = result['missing_fields']
-                    st.session_state.partial_facts = result['facts']
-                    st.session_state.state = 'follow_up'
-                    st.rerun()
-                else:
-                    # Se temos informações suficientes, mostrar resultados
-                    st.session_state.results = result['classifications']
-                    st.session_state.state = 'result'
-                    st.rerun()
+                # Atualizar a interface com os resultados
+                st.session_state.results = result["classifications"]
+                st.session_state.state = 'result'
+                st.rerun()
 
 elif st.session_state.state == 'follow_up':
     st.subheader("Precisamos de mais algumas informações")
@@ -92,25 +81,16 @@ elif st.session_state.state == 'follow_up':
     if st.button("Continuar análise"):
         if follow_up_text:
             with st.spinner("Processando suas respostas..."):
-                # Processar a resposta do follow-up
-                result = processor._process_followup(
-                    follow_up_text, 
-                    st.session_state.keywords,
-                    st.session_state.missing_fields
-                )
+                # Processar a resposta complementar através do sistema especialista
+                combined_text = follow_up_text  # Você pode combinar com o texto original se necessário
                 
-                if result['status'] == 'incomplete':
-                    # Se ainda faltam informações, atualizar e continuar no follow_up
-                    st.session_state.keywords = result['identified_keywords']
-                    st.session_state.questions = result['questions']
-                    st.session_state.missing_fields = result['missing_fields']
-                    st.session_state.partial_facts = result['facts']
-                    st.rerun()
-                else:
-                    # Se temos informações suficientes, mostrar resultados
-                    st.session_state.results = result['classifications']
-                    st.session_state.state = 'result'
-                    st.rerun()
+                # Usar o sistema especialista para analisar o texto complementar
+                result = expert_system.analyze_text(combined_text)
+                
+                # Atualizar a interface com os resultados
+                st.session_state.results = result["classifications"]
+                st.session_state.state = 'result'
+                st.rerun()
         else:
             st.error("Por favor, responda às perguntas para continuar.")
 
@@ -133,7 +113,7 @@ elif st.session_state.state == 'result':
                 subtype_formatted = subtype.replace("_", " ").capitalize()
                 title = f"{subtype_formatted} ({vtype.replace('_', ' ').title()})"
             else:
-                title = VIOLENCE_TYPES[vtype]['nome']
+                title = VIOLENCE_TYPES[vtype]['nome'] if 'nome' in VIOLENCE_TYPES[vtype] else vtype.replace('_', ' ').title()
             
             # Exibir resultado
             with st.expander(f"{title} - Confiança: {confidence_pct}%"):
@@ -142,6 +122,12 @@ elif st.session_state.state == 'result':
                     st.write(VIOLENCE_TYPES[vtype]["subtipos"][subtype]["definicao"])
                 else:
                     st.write(VIOLENCE_TYPES[vtype]["definicao"])
+                
+                # Exibir explicações se disponíveis
+                if "explanation" in r and r["explanation"]:
+                    st.subheader("Por que identificamos este tipo:")
+                    for exp in r["explanation"]:
+                        st.write(f"- {exp}")
                 
                 # Exibir recomendações se disponíveis
                 if "recomendacoes" in VIOLENCE_TYPES[vtype]:
