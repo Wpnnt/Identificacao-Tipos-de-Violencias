@@ -131,7 +131,7 @@ elif st.session_state.state == 'result':
             # Determinar o título a ser exibido
             if subtype:
                 subtype_formatted = subtype.replace("_", " ").capitalize()
-                title = f"{subtype_formatted} ({VIOLENCE_TYPES[vtype]['nome']})"
+                title = f"{subtype_formatted} ({vtype.replace('_', ' ').title()})"
             else:
                 title = VIOLENCE_TYPES[vtype]['nome']
             
@@ -139,9 +139,9 @@ elif st.session_state.state == 'result':
             with st.expander(f"{title} - Confiança: {confidence_pct}%"):
                 # Exibir descrição
                 if subtype and "subtipos" in VIOLENCE_TYPES[vtype] and subtype in VIOLENCE_TYPES[vtype]["subtipos"]:
-                    st.write(VIOLENCE_TYPES[vtype]["subtipos"][subtype]["descricao"])
+                    st.write(VIOLENCE_TYPES[vtype]["subtipos"][subtype]["definicao"])
                 else:
-                    st.write(VIOLENCE_TYPES[vtype]["descricao"])
+                    st.write(VIOLENCE_TYPES[vtype]["definicao"])
                 
                 # Exibir recomendações se disponíveis
                 if "recomendacoes" in VIOLENCE_TYPES[vtype]:

@@ -10,7 +10,7 @@ class TextProcessor:
     """
     def __init__(self, api_key: str = None, 
                  model: str = "meta-llama/llama-4-scout-17b-16e-instruct"):
-        # Usa a chave da API fornecida ou busca da variável de ambiente
+
         self.api_key = api_key if api_key else os.environ.get("GROQ_API_KEY", "")
         self.model = model
         self.groq_api = GroqAPI(api_key=self.api_key, model=self.model)
