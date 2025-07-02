@@ -1,6 +1,6 @@
 from knowledge_base.violence_types import *
 from knowledge_base.confidence_levels import *
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List, Tuple, Optional, Union
 
 class TextClassifier:
     def __init__(self, groq_api=None):
@@ -354,3 +354,101 @@ def classify_text(text, groq_api=None):
     """
     classifier = TextClassifier(groq_api)
     return classifier.classify_text(text)
+
+def classify_by_mapping(form_data: Dict[str, Any], groq_api=None) -> List[Dict[str, Any]]:
+    """
+    Função de compatibilidade que converte dados de formulário em classificações.
+    
+    Esta função permite a compatibilidade com o sistema antigo que usava
+    formulários estruturados, convertendo esses dados para o formato de
+    fatos usados pelo TextClassifier.
+    
+    Args:
+        form_data (Dict): Dados estruturados do formulário
+        groq_api: Opcional, instância da API do Groq
+        
+    Returns:
+        List[Dict[str, Any]]: Lista de classificações identificadas
+    """
+    print("\n🔄 Usando compatibilidade de formulário para TextClassifier")
+    print(f"📝 Dados recebidos: {form_data}")
+    
+    # Criar um classificador de texto
+    classifier = TextClassifier(groq_api)
+    
+    # Converter os dados do formulário para o formato de fatos
+    facts = convert_form_data_to_facts(form_data)
+    print(f"🔄 Convertido para formato de fatos: {facts}")
+    
+    # Usar o classificador para pontuar e aplicar limiares
+    classifications = classifier._score_extracted_facts(facts)
+    results = classifier._apply_thresholds(classifications)
+    
+    return results
+
+def convert_form_data_to_facts(form_data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Converte dados de formulário para o formato de fatos esperado pelo TextClassifier.
+    
+    Args:
+        form_data (Dict): Dados do formulário estruturado
+        
+    Returns:
+        Dict: Fatos estruturados por categoria
+    """
+    facts = {
+        "comportamentos": [],
+        "contexto": {},
+        "frequencia": {},
+        "caracteristicas_alvo": [],
+        "relacionamento": {},
+        "impacto": []
+    }
+    
+    # Mapear action_type para comportamentos
+    action_type = form_data.get("action_type")
+    if action_type:
+        if isinstance(action_type, list):
+            for behavior in action_type:
+                facts["comportamentos"].append({
+                    "tipo": behavior,
+                    "intensidade": "media"  # Valor padrão
+                })
+        else:
+            facts["comportamentos"].append({
+                "tipo": action_type,
+                "intensidade": "media"  # Valor padrão
+            })
+    
+    # Mapear context para contexto
+    context = form_data.get("context")
+    if context:
+        facts["contexto"]["local"] = context
+    
+    # Mapear frequency para frequencia
+    frequency = form_data.get("frequency")
+    if frequency:
+        facts["frequencia"]["valor"] = frequency
+    
+    # Mapear target para caracteristicas_alvo
+    target = form_data.get("target")
+    if target:
+        if isinstance(target, list):
+            facts["caracteristicas_alvo"] = target
+        else:
+            facts["caracteristicas_alvo"] = [target]
+    
+    # Mapear relationship para relacionamento
+    relationship = form_data.get("relationship")
+    if relationship:
+        facts["relacionamento"]["tipo"] = relationship
+    
+    # Mapear impact para impacto
+    impact = form_data.get("impact")
+    if impact:
+        if isinstance(impact, list):
+            facts["impacto"] = impact
+        else:
+            facts["impacto"] = [impact]
+    
+    return facts
