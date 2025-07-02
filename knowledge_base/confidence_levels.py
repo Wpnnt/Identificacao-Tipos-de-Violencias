@@ -185,26 +185,6 @@ SEVERITY_RANKING = {
     },
     "violencia_digital": {
         "cyberbullying": 5,
-        "exposicao_nao_consentida": 8  # Alta gravidade, próxima de violência sexual
-    },
-    "discriminacao_religiosa": {
-        "ofensa_direta": 4,
-        "discriminacao_institucional": 5
-    },
-    "xenofobia": {
-        "discriminacao_regional": 4,
-        "xenofobia_internacional": 5
-    },
-    "gordofobia": {
-        "discriminacao_regional": 4,
-        "xenofobia_internacional": 5
-    },
-    "capacitismo": {
-        "barreiras_fisicas": 5,
-        "barreiras_atitudinais": 4
-    },
-    "violencia_digital": {
-        "cyberbullying": 5,
         "exposicao_nao_consentida": 8
     },
     "discriminacao_religiosa": {
@@ -233,9 +213,10 @@ def get_threshold(violence_type, subtype=None):
     elif violence_type in CLASSIFICATION_THRESHOLDS:
         if isinstance(CLASSIFICATION_THRESHOLDS[violence_type], dict):
             # Se for um dicionário de subtipos mas nenhum subtipo foi especificado,
-            # usa o menor limiar entre os subtipos.
+            # usa o menor valor entre os subtipos como limiar conservador
             return min(CLASSIFICATION_THRESHOLDS[violence_type].values())
         else:
+            # Se for um valor direto, retorna esse valor
             return CLASSIFICATION_THRESHOLDS[violence_type]
     return 0
 
@@ -258,6 +239,7 @@ def get_max_score(violence_type, subtype=None):
             # usa o maior valor entre os subtipos
             return max(MAX_POSSIBLE_SCORES[violence_type].values())
         else:
+            # Se for um valor direto, retorna esse valor
             return MAX_POSSIBLE_SCORES[violence_type]
     return 0
 
@@ -281,19 +263,13 @@ def resolve_ambiguity(classifications):
     if len(classifications) == 1:
         return classifications[0]
     
-    # Ordena as classificações por:
+    # Ordenar as classificações por:
     # 1. Pontuação (decrescente)
     # 2. Se empatar, por gravidade (decrescente)
-    def get_severity(classification):
+    def get_severity_score(classification):
         vtype = classification['violence_type']
         subtype = classification.get('subtype')
-        
-        if vtype in SEVERITY_RANKING:
-            if isinstance(SEVERITY_RANKING[vtype], dict) and subtype:
-                return SEVERITY_RANKING[vtype].get(subtype, 0)
-            elif isinstance(SEVERITY_RANKING[vtype], (int, float)):
-                return SEVERITY_RANKING[vtype]
-        return 0
+        return get_severity(vtype, subtype)
     
     # Primeiro critério: pontuação
     sorted_by_score = sorted(classifications, key=lambda x: x['score'], reverse=True)
@@ -304,7 +280,7 @@ def resolve_ambiguity(classifications):
         return sorted_by_score[0]
     
     # Se a pontuação é próxima, verificamos a gravidade
-    sorted_by_severity = sorted(sorted_by_score, key=get_severity, reverse=True)
+    sorted_by_severity = sorted(sorted_by_score, key=get_severity_score, reverse=True)
     
     # Retorna o de maior gravidade
     return sorted_by_severity[0]
@@ -356,6 +332,24 @@ def get_confidence_level_label(confidence):
         if data['min'] <= confidence <= data['max']:
             return data['label']
     return "Indeterminado"
+
+def get_severity(vtype, subtype=None):
+    """
+    Obtém o nível de gravidade para um tipo/subtipo de violência.
+    
+    Args:
+        vtype (str): Tipo principal de violência
+        subtype (str, optional): Subtipo específico (se aplicável)
+        
+    Returns:
+        int: Nível de gravidade
+    """
+    if vtype in SEVERITY_RANKING:
+        if isinstance(SEVERITY_RANKING[vtype], dict) and subtype:
+            return SEVERITY_RANKING[vtype].get(subtype, 0)
+        elif isinstance(SEVERITY_RANKING[vtype], (int, float)):
+            return SEVERITY_RANKING[vtype]
+    return 0
 
 def get_confidence_description(confidence):
     """
