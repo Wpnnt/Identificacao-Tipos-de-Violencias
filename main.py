@@ -9,13 +9,8 @@ from knowledge_base.violence_types import VIOLENCE_TYPES
 # Inicializar o processador de texto com a API do Groq
 @st.cache_resource
 def get_text_processor():
-    # Usar variável de ambiente ou secrets do Streamlit
     api_key = st.secrets.get("GROQ_API_KEY", os.environ.get("GROQ_API_KEY", ""))
-    groq_api = GroqAPI(
-        api_key=api_key,
-        model="meta-llama/llama-4-scout-17b-16e-instruct"
-    )
-    return TextProcessor(groq_api)
+    return TextProcessor(api_key=api_key)
 
 st.set_page_config(
     page_title="Sistema Especialista",
@@ -65,12 +60,12 @@ if st.session_state.state == 'initial':
                     st.session_state.missing_fields = result['missing_fields']
                     st.session_state.partial_facts = result['facts']
                     st.session_state.state = 'follow_up'
-                    st.experimental_rerun()
+                    st.rerun()
                 else:
                     # Se temos informações suficientes, mostrar resultados
                     st.session_state.results = result['classifications']
                     st.session_state.state = 'result'
-                    st.experimental_rerun()
+                    st.rerun()
 
 elif st.session_state.state == 'follow_up':
     st.subheader("Precisamos de mais algumas informações")
@@ -110,12 +105,12 @@ elif st.session_state.state == 'follow_up':
                     st.session_state.questions = result['questions']
                     st.session_state.missing_fields = result['missing_fields']
                     st.session_state.partial_facts = result['facts']
-                    st.experimental_rerun()
+                    st.rerun()
                 else:
                     # Se temos informações suficientes, mostrar resultados
                     st.session_state.results = result['classifications']
                     st.session_state.state = 'result'
-                    st.experimental_rerun()
+                    st.rerun()
         else:
             st.error("Por favor, responda às perguntas para continuar.")
 
@@ -161,4 +156,4 @@ elif st.session_state.state == 'result':
             if key in st.session_state:
                 del st.session_state[key]
         st.session_state.state = 'initial'
-        st.experimental_rerun()
+        st.rerun()
