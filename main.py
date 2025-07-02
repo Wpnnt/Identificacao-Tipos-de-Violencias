@@ -1,9 +1,21 @@
+import os
 import streamlit as st # type: ignore
 from engine.expert_system import ExpertSystem
 from engine.facts import *
-from form import *
-from engine.classifier import *
+from engine.text_processor import TextProcessor
+from utils.groq_integration import GroqAPI
+from knowledge_base.violence_types import VIOLENCE_TYPES
 
+# Inicializar o processador de texto com a API do Groq
+@st.cache_resource
+def get_text_processor():
+    # Usar variável de ambiente ou secrets do Streamlit
+    api_key = st.secrets.get("GROQ_API_KEY", os.environ.get("GROQ_API_KEY", ""))
+    groq_api = GroqAPI(
+        api_key=api_key,
+        model="meta-llama/llama-4-scout-17b-16e-instruct"
+    )
+    return TextProcessor(groq_api)
 
 st.set_page_config(
     page_title="Sistema Especialista",
@@ -13,39 +25,140 @@ st.set_page_config(
 )
 st.title("Sistema Especialista de Identificação de Violência")
 
-#====================formulario========================
+# Inicializar variáveis de estado da sessão
+if 'state' not in st.session_state:
+    st.session_state.state = 'initial'  # initial, follow_up, result
+if 'keywords' not in st.session_state:
+    st.session_state.keywords = {}
+if 'questions' not in st.session_state:
+    st.session_state.questions = []
+if 'missing_fields' not in st.session_state:
+    st.session_state.missing_fields = []
+if 'partial_facts' not in st.session_state:
+    st.session_state.partial_facts = {}
+if 'results' not in st.session_state:
+    st.session_state.results = []
 
-user_type_action = ask_type_action()
-user_context = ask_context()
-user_target = ask_target()
+processor = get_text_processor()
 
-
-#====================processamento========================
-
-if st.button("Avaliar"):
-    if not user_type_action or not user_context or not user_target:
-        st.error("Por favor, preencha todas as informações.")
-    else:
-        engine = ExpertSystem()
-        engine.reset()
-
-        for action in user_type_action:
-            for t in user_target:
-                engine.declare(ViolenceRelact(
-                    action_type=action,
-                    context=user_context,
-                    target=t
-                ))
-
-        engine.run()
-
-        if engine.results:
-            st.success("Resultados encontrados: ")
-            for r in engine.results:
-                subtype = r["subtype"].replace("_", " ").capitalize()
-                confidence_pct = round(r["confidence"] * 100)
-                st.markdown(f"- **{subtype}** (Confiança: **{confidence_pct}%**)")
+# Interface do usuário baseada no estado atual
+if st.session_state.state == 'initial':
+    st.subheader("Relate a situação ocorrida")
+    
+    user_text = st.text_area(
+        "Descreva em detalhes o que aconteceu:",
+        height=200,
+        placeholder="Conte com suas palavras o que aconteceu, incluindo detalhes sobre o comportamento, local, frequência e como isso te afetou..."
+    )
+    
+    if st.button("Analisar"):
+        if len(user_text) < 20:
+            st.error("Por favor, forneça um relato mais detalhado para análise.")
         else:
-            st.info("Nenhum tipo de violência identificado com base nas informações fornecidas.")
+            with st.spinner("Analisando seu relato..."):
+                result = processor.process_user_text(user_text)
+                
+                if result['status'] == 'incomplete':
+                    # Se faltam informações críticas, pedir mais detalhes
+                    st.session_state.keywords = result['identified_keywords']
+                    st.session_state.questions = result['questions']
+                    st.session_state.missing_fields = result['missing_fields']
+                    st.session_state.partial_facts = result['facts']
+                    st.session_state.state = 'follow_up'
+                    st.experimental_rerun()
+                else:
+                    # Se temos informações suficientes, mostrar resultados
+                    st.session_state.results = result['classifications']
+                    st.session_state.state = 'result'
+                    st.experimental_rerun()
 
+elif st.session_state.state == 'follow_up':
+    st.subheader("Precisamos de mais algumas informações")
+    
+    # Mostrar as palavras-chave já identificadas
+    if st.session_state.keywords:
+        st.write("Com base no seu relato, identificamos:")
+        for category, keywords in st.session_state.keywords.items():
+            if keywords:
+                category_name = category.replace("_", " ").capitalize()
+                st.write(f"- **{category_name}**: {', '.join(keywords)}")
+    
+    # Mostrar as perguntas complementares
+    st.write("Para uma análise mais precisa, por favor responda:")
+    for question in st.session_state.questions:
+        st.write(f"- {question}")
+    
+    follow_up_text = st.text_area(
+        "Sua resposta:",
+        height=150,
+        placeholder="Responda as perguntas acima para continuar a análise..."
+    )
+    
+    if st.button("Continuar análise"):
+        if follow_up_text:
+            with st.spinner("Processando suas respostas..."):
+                # Processar a resposta do follow-up
+                result = processor._process_followup(
+                    follow_up_text, 
+                    st.session_state.keywords,
+                    st.session_state.missing_fields
+                )
+                
+                if result['status'] == 'incomplete':
+                    # Se ainda faltam informações, atualizar e continuar no follow_up
+                    st.session_state.keywords = result['identified_keywords']
+                    st.session_state.questions = result['questions']
+                    st.session_state.missing_fields = result['missing_fields']
+                    st.session_state.partial_facts = result['facts']
+                    st.experimental_rerun()
+                else:
+                    # Se temos informações suficientes, mostrar resultados
+                    st.session_state.results = result['classifications']
+                    st.session_state.state = 'result'
+                    st.experimental_rerun()
+        else:
+            st.error("Por favor, responda às perguntas para continuar.")
 
+elif st.session_state.state == 'result':
+    st.subheader("Resultados da Análise")
+    
+    if not st.session_state.results:
+        st.info("Nenhum tipo de violência foi identificado com base nas informações fornecidas.")
+    else:
+        st.success("Identificamos possíveis tipos de violência:")
+        
+        for r in st.session_state.results:
+            # Obter informações mais detalhadas do tipo/subtipo
+            vtype = r["violence_type"]
+            subtype = r.get("subtype")
+            confidence_pct = round(r["confidence"] * 100)
+            
+            # Determinar o título a ser exibido
+            if subtype:
+                subtype_formatted = subtype.replace("_", " ").capitalize()
+                title = f"{subtype_formatted} ({VIOLENCE_TYPES[vtype]['nome']})"
+            else:
+                title = VIOLENCE_TYPES[vtype]['nome']
+            
+            # Exibir resultado
+            with st.expander(f"{title} - Confiança: {confidence_pct}%"):
+                # Exibir descrição
+                if subtype and "subtipos" in VIOLENCE_TYPES[vtype] and subtype in VIOLENCE_TYPES[vtype]["subtipos"]:
+                    st.write(VIOLENCE_TYPES[vtype]["subtipos"][subtype]["descricao"])
+                else:
+                    st.write(VIOLENCE_TYPES[vtype]["descricao"])
+                
+                # Exibir recomendações se disponíveis
+                if "recomendacoes" in VIOLENCE_TYPES[vtype]:
+                    st.subheader("Recomendações:")
+                    for rec in VIOLENCE_TYPES[vtype]["recomendacoes"]:
+                        st.write(f"- {rec}")
+    
+    # Opção para reiniciar
+    if st.button("Iniciar Nova Análise"):
+        # Resetar todos os estados
+        for key in ['state', 'keywords', 'questions', 'missing_fields', 'partial_facts', 'results']:
+            if key in st.session_state:
+                del st.session_state[key]
+        st.session_state.state = 'initial'
+        st.experimental_rerun()

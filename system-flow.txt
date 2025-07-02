@@ -1,0 +1,17 @@
+[USUÁRIO] → Fornece relato textual livre sobre a situação
+    ↓
+[SISTEMA] → Prepara prompt com o relato e palavras-chave do sistema
+    ↓
+[GROQ] → Analisa o texto e identifica palavras-chave/critérios relevantes
+    ↓
+[SISTEMA] → Recebe JSON de resposta e converte em fatos para o motor de inferência
+    ↓
+[SISTEMA] → Verifica se há informações faltantes críticas
+    ↓
+[SISTEMA] → Se necessário, solicita ao Grok que formule perguntas específicas
+    ↓
+[USUÁRIO] → Responde às perguntas complementares
+    ↓
+[SISTEMA] → Repete o ciclo até ter dados suficientes para classificação confiável
+    ↓
+[SISTEMA] → Apresenta classificação final com explicações e recomendações
