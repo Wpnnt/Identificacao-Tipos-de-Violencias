@@ -6,10 +6,10 @@ CRITERION_WEIGHTS = {
         "supporting": 4    # Comportamento suportivo
     },
     "frequency": {
-        "single": 2,           # Uma única vez
-        "few": 4,              # Algumas vezes
-        "repeated": 6,         # Repetidamente
-        "continuous": 8        # Continuamente
+        "single": 2,       # Uma única vez
+        "few": 4,          # Algumas vezes
+        "repeated": 6,     # Repetidamente
+        "continuous": 8    # Continuamente
     },
     "context": {
         "critical": 10,    # Contexto determinante (ex: local de trabalho para assédio moral)
