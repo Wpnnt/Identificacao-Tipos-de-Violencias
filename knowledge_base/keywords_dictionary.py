@@ -1,6 +1,330 @@
-from knowledge_base.violence_types import VIOLENCE_TYPES
-from knowledge_base.confidence_levels import CONCEPT_MAPPING
+from knowledge_base.violence_types import VIOLENCE_TYPES, CRITERION_WEIGHTS
 from typing import Dict, List
+from knowledge_base.violence_types import CRITERION_WEIGHTS
+from typing import Dict, List
+
+CONCEPT_MAPPING = {
+    "comportamentos": {
+        "interrupcao": {
+            "microagressoes": {"interrupcoes_constantes": CRITERION_WEIGHTS["behavior"]["critical"]}
+        },
+        "questionamento_capacidade": {
+            "microagressoes": {"questionar_julgamento": CRITERION_WEIGHTS["behavior"]["critical"]},
+            "discriminacao_genero": {"discriminacao_sutil": CRITERION_WEIGHTS["behavior"]["relevant"]}
+        },
+        "comentarios_saude_mental": {
+            "microagressoes": {"comentarios_saude_mental": CRITERION_WEIGHTS["behavior"]["critical"]}
+        },
+        "piadas_estereotipos": {
+            "microagressoes": {"estereotipos": CRITERION_WEIGHTS["behavior"]["critical"]}
+        },
+        "perseguicao": {
+            "perseguicao": CRITERION_WEIGHTS["behavior"]["critical"]
+        },
+        "vigilancia": {
+            "perseguicao": CRITERION_WEIGHTS["behavior"]["critical"]
+        },
+        "exclusao": {
+            "discriminacao_genero": {
+                "discriminacao_flagrante": CRITERION_WEIGHTS["behavior"]["critical"],
+                "discriminacao_sutil": CRITERION_WEIGHTS["behavior"]["relevant"]
+            }
+        },
+        "ameaca": {
+            "abuso_psicologico": CRITERION_WEIGHTS["behavior"]["critical"],
+            "perseguicao": CRITERION_WEIGHTS["behavior"]["relevant"]
+        },
+        "constrangimento": {
+            "abuso_psicologico": CRITERION_WEIGHTS["behavior"]["critical"]
+        },
+        "humilhacao": {
+            "abuso_psicologico": CRITERION_WEIGHTS["behavior"]["critical"],
+            "assedio_moral_genero": CRITERION_WEIGHTS["behavior"]["relevant"]
+        },
+        "pressao_tarefas": {
+            "assedio_moral_genero": CRITERION_WEIGHTS["behavior"]["critical"]
+        },
+        "natureza_sexual_nao_consentido": {
+            "violencia_sexual": {"assedio_sexual": CRITERION_WEIGHTS["behavior"]["critical"]}
+        },
+        "contato_fisico_nao_consentido": {
+            "violencia_sexual": {"importunacao_sexual": CRITERION_WEIGHTS["behavior"]["critical"]}
+        },
+        "ato_obsceno": {
+            "violencia_sexual": {"importunacao_sexual": CRITERION_WEIGHTS["behavior"]["critical"]}
+        },
+        "coercao_sexual": {
+            "violencia_sexual": {"estupro": CRITERION_WEIGHTS["behavior"]["critical"]}
+        },
+        "comentarios_sobre_peso": {
+            "gordofobia": {"discriminacao_direta": CRITERION_WEIGHTS["behavior"]["critical"]}
+        },
+        "piadas_sobre_peso": {
+            "gordofobia": {"discriminacao_direta": CRITERION_WEIGHTS["behavior"]["critical"]}
+        },
+        "exclusao_por_peso": {
+            "gordofobia": {"discriminacao_estrutural": CRITERION_WEIGHTS["behavior"]["critical"]}
+        },
+        "negacao_acessibilidade": {
+            "capacitismo": {"barreiras_fisicas": CRITERION_WEIGHTS["behavior"]["critical"]}
+        },
+        "infantilizacao": {
+            "capacitismo": {"barreiras_atitudinais": CRITERION_WEIGHTS["behavior"]["critical"]}
+        },
+        "cyberbullying": {
+            "violencia_digital": {"cyberbullying": CRITERION_WEIGHTS["behavior"]["critical"]}
+        },
+        "mensagens_ofensivas": {
+            "violencia_digital": {"cyberbullying": CRITERION_WEIGHTS["behavior"]["relevant"]}
+        },
+        "exposicao_conteudo": {
+            "violencia_digital": {"exposicao_nao_consentida": CRITERION_WEIGHTS["behavior"]["critical"]}
+        },
+        "zombaria_religiao": {
+            "discriminacao_religiosa": {"ofensa_direta": CRITERION_WEIGHTS["behavior"]["critical"]}
+        },
+        "impedimento_pratica_religiosa": {
+            "discriminacao_religiosa": {"discriminacao_institucional": CRITERION_WEIGHTS["behavior"]["critical"]}
+        },
+        "discriminacao_origem": {
+            "xenofobia": {"xenofobia_internacional": CRITERION_WEIGHTS["behavior"]["critical"]}
+        },
+        "piada_sotaque": {
+            "xenofobia": {"discriminacao_regional": CRITERION_WEIGHTS["behavior"]["critical"]}
+        }
+    },
+    "frequencia": {
+        "unica_vez": {
+            "violencia_sexual": {
+                "estupro": CRITERION_WEIGHTS["frequency"]["single"], 
+                "importunacao_sexual": CRITERION_WEIGHTS["frequency"]["single"],
+                "assedio_sexual": CRITERION_WEIGHTS["frequency"]["single"]
+            },
+            "discriminacao_genero": {"discriminacao_flagrante": CRITERION_WEIGHTS["frequency"]["single"]}
+        },
+        "algumas_vezes": {
+            "microagressoes": {
+                "interrupcoes_constantes": CRITERION_WEIGHTS["frequency"]["few"],
+                "estereotipos": CRITERION_WEIGHTS["frequency"]["few"],
+                "comentarios_saude_mental": CRITERION_WEIGHTS["frequency"]["few"]
+            },
+            "violencia_sexual": {"assedio_sexual": CRITERION_WEIGHTS["frequency"]["few"]}
+        },
+        "repetidamente": {
+            "microagressoes": {
+                "interrupcoes_constantes": CRITERION_WEIGHTS["frequency"]["repeated"],
+                "questionar_julgamento": CRITERION_WEIGHTS["frequency"]["repeated"],
+                "estereotipos": CRITERION_WEIGHTS["frequency"]["repeated"]
+            },
+            "perseguicao": CRITERION_WEIGHTS["frequency"]["repeated"],
+            "discriminacao_genero": {"discriminacao_sutil": CRITERION_WEIGHTS["frequency"]["repeated"]},
+            "abuso_psicologico": CRITERION_WEIGHTS["frequency"]["repeated"],
+            "violencia_digital": {"cyberbullying": CRITERION_WEIGHTS["frequency"]["repeated"]}
+        },
+        "continuamente": {
+            "microagressoes": {
+                "interrupcoes_constantes": CRITERION_WEIGHTS["frequency"]["continuous"],
+                "questionar_julgamento": CRITERION_WEIGHTS["frequency"]["continuous"]
+            },
+            "perseguicao": CRITERION_WEIGHTS["frequency"]["continuous"],
+            "discriminacao_genero": {"discriminacao_sutil": CRITERION_WEIGHTS["frequency"]["continuous"]},
+            "abuso_psicologico": CRITERION_WEIGHTS["frequency"]["continuous"],
+            "assedio_moral_genero": CRITERION_WEIGHTS["frequency"]["continuous"],
+            "xenofobia": {"discriminacao_regional": CRITERION_WEIGHTS["frequency"]["continuous"]}
+        }
+    },
+    "contexto": {
+        "sala_aula": {
+            "microagressoes": {"interrupcoes_constantes": CRITERION_WEIGHTS["context"]["relevant"]},
+            "capacitismo": {"barreiras_fisicas": CRITERION_WEIGHTS["context"]["relevant"]}
+        },
+        "ambiente_administrativo": {
+            "microagressoes": {
+                "interrupcoes_constantes": CRITERION_WEIGHTS["context"]["relevant"],
+                "questionar_julgamento": CRITERION_WEIGHTS["context"]["relevant"]
+            }
+        },
+        "local_trabalho": {
+            "assedio_moral_genero": CRITERION_WEIGHTS["context"]["critical"],
+            "microagressoes": {"questionar_julgamento": CRITERION_WEIGHTS["context"]["relevant"]}
+        },
+        "espaco_publico_campus": {
+            "perseguicao": CRITERION_WEIGHTS["context"]["supporting"],
+            "microagressoes": {"estereotipos": CRITERION_WEIGHTS["context"]["relevant"]},
+            "violencia_sexual": {"importunacao_sexual": CRITERION_WEIGHTS["context"]["supporting"]}
+        },
+        "ambiente_online": {
+            "perseguicao": CRITERION_WEIGHTS["context"]["supporting"],
+            "violencia_digital": {
+                "cyberbullying": CRITERION_WEIGHTS["context"]["critical"],
+                "exposicao_nao_consentida": CRITERION_WEIGHTS["context"]["critical"]
+            }
+        },
+        "redes_sociais": {
+            "violencia_digital": {
+                "cyberbullying": CRITERION_WEIGHTS["context"]["critical"],
+                "exposicao_nao_consentida": CRITERION_WEIGHTS["context"]["critical"]
+            }
+        },
+        "evento_academico": {
+            "microagressoes": {"interrupcoes_constantes": CRITERION_WEIGHTS["context"]["relevant"]},
+            "violencia_sexual": {"importunacao_sexual": CRITERION_WEIGHTS["context"]["supporting"]}
+        },
+        "ambiente_social": {
+            "microagressoes": {"estereotipos": CRITERION_WEIGHTS["context"]["relevant"]},
+            "violencia_sexual": {"importunacao_sexual": CRITERION_WEIGHTS["context"]["supporting"]},
+            "gordofobia": {"discriminacao_direta": CRITERION_WEIGHTS["context"]["relevant"]}
+        },
+        "local_culto_religioso": {
+            "discriminacao_religiosa": {
+                "ofensa_direta": CRITERION_WEIGHTS["context"]["critical"],
+                "discriminacao_institucional": CRITERION_WEIGHTS["context"]["critical"]
+            }
+        }
+    },
+    "caracteristicas_alvo": {
+        "genero": {
+            "microagressoes": {"interrupcoes_constantes": CRITERION_WEIGHTS["target"]["relevant"]},
+            "discriminacao_genero": {
+                "discriminacao_flagrante": CRITERION_WEIGHTS["target"]["critical"],
+                "discriminacao_sutil": CRITERION_WEIGHTS["target"]["critical"]
+            },
+            "assedio_moral_genero": CRITERION_WEIGHTS["target"]["critical"]
+        },
+        "orientacao_sexual": {
+            "discriminacao_genero": {
+                "discriminacao_flagrante": CRITERION_WEIGHTS["target"]["critical"],
+                "discriminacao_sutil": CRITERION_WEIGHTS["target"]["critical"]
+            }
+        },
+        "raca_etnia": {
+            "microagressoes": {
+                "interrupcoes_constantes": CRITERION_WEIGHTS["target"]["relevant"],
+                "estereotipos": CRITERION_WEIGHTS["target"]["relevant"]
+            }
+        },
+        "condicao_financeira": {
+            "microagressoes": {"estereotipos": CRITERION_WEIGHTS["target"]["supporting"]}
+        },
+        "deficiencia": {
+            "microagressoes": {
+                "interrupcoes_constantes": CRITERION_WEIGHTS["target"]["relevant"],
+                "estereotipos": CRITERION_WEIGHTS["target"]["relevant"]
+            },
+            "capacitismo": {
+                "barreiras_fisicas": CRITERION_WEIGHTS["target"]["critical"],
+                "barreiras_atitudinais": CRITERION_WEIGHTS["target"]["critical"]
+            }
+        },
+        "aparencia_fisica": {
+            "microagressoes": {"estereotipos": CRITERION_WEIGHTS["target"]["supporting"]},
+            "gordofobia": {"discriminacao_direta": CRITERION_WEIGHTS["target"]["critical"]}
+        },
+        "peso_corporal": {
+            "gordofobia": {
+                "discriminacao_direta": CRITERION_WEIGHTS["target"]["critical"],
+                "discriminacao_estrutural": CRITERION_WEIGHTS["target"]["critical"]
+            }
+        },
+        "origem_regional": {
+            "microagressoes": {"estereotipos": CRITERION_WEIGHTS["target"]["supporting"]},
+            "xenofobia": {
+                "discriminacao_regional": CRITERION_WEIGHTS["target"]["critical"],
+                "xenofobia_internacional": CRITERION_WEIGHTS["target"]["relevant"]
+            }
+        },
+        "origem_estrangeira": {
+            "xenofobia": {"xenofobia_internacional": CRITERION_WEIGHTS["target"]["critical"]}
+        },
+        "desempenho_academico": {
+            "microagressoes": {"questionar_julgamento": CRITERION_WEIGHTS["target"]["supporting"]}
+        },
+        "religiao": {
+            "discriminacao_religiosa": {
+                "ofensa_direta": CRITERION_WEIGHTS["target"]["critical"],
+                "discriminacao_institucional": CRITERION_WEIGHTS["target"]["critical"]
+            }
+        }
+    },
+    "relacionamento": {
+        "superior_hierarquico": {
+            "abuso_psicologico": CRITERION_WEIGHTS["relationship"]["hierarchical"],
+            "assedio_moral_genero": CRITERION_WEIGHTS["relationship"]["hierarchical"]
+        },
+        "colega": {
+            "microagressoes": {"questionar_julgamento": CRITERION_WEIGHTS["relationship"]["peer"]}
+        },
+        "subordinado": {
+            "microagressoes": {"questionar_julgamento": CRITERION_WEIGHTS["relationship"]["peer"]}
+        },
+        "desconhecido": {
+            "perseguicao": CRITERION_WEIGHTS["relationship"]["unknown"],
+            "violencia_sexual": {"importunacao_sexual": CRITERION_WEIGHTS["relationship"]["unknown"]}
+        },
+        "ex_relacionamento": {
+            "perseguicao": CRITERION_WEIGHTS["relationship"]["ex_partner"]
+        }
+    },
+    "impacto": {
+        "constrangimento": {
+            "microagressoes": {"estereotipos": CRITERION_WEIGHTS["impact"]["mild"]},
+            "violencia_sexual": {
+                "assedio_sexual": CRITERION_WEIGHTS["impact"]["moderate"],
+                "importunacao_sexual": CRITERION_WEIGHTS["impact"]["moderate"]
+            },
+            "discriminacao_religiosa": {"ofensa_direta": CRITERION_WEIGHTS["impact"]["moderate"]}
+        },
+        "impacto_participacao": {
+            "microagressoes": {"interrupcoes_constantes": CRITERION_WEIGHTS["impact"]["moderate"]},
+            "gordofobia": {"discriminacao_estrutural": CRITERION_WEIGHTS["impact"]["strong"]}
+        },
+        "danos_emocionais": {
+            "microagressoes": {"comentarios_saude_mental": CRITERION_WEIGHTS["impact"]["strong"]},
+            "abuso_psicologico": CRITERION_WEIGHTS["impact"]["critical"],
+            "assedio_moral_genero": CRITERION_WEIGHTS["impact"]["strong"],
+            "violencia_sexual": {"estupro": CRITERION_WEIGHTS["impact"]["critical"]},
+            "violencia_digital": {"exposicao_nao_consentida": CRITERION_WEIGHTS["impact"]["critical"]}
+        },
+        "limitacao_liberdade": {
+            "perseguicao": CRITERION_WEIGHTS["impact"]["strong"],
+            "capacitismo": {"barreiras_fisicas": CRITERION_WEIGHTS["impact"]["critical"]}
+        },
+        "prejuizo_desempenho": {
+            "microagressoes": {"questionar_julgamento": CRITERION_WEIGHTS["impact"]["moderate"]},
+            "discriminacao_genero": {
+                "discriminacao_sutil": CRITERION_WEIGHTS["impact"]["strong"],
+                "discriminacao_flagrante": CRITERION_WEIGHTS["impact"]["strong"]
+            },
+            "assedio_moral_genero": CRITERION_WEIGHTS["impact"]["strong"]
+        },
+        "medo_inseguranca": {
+            "perseguicao": CRITERION_WEIGHTS["impact"]["strong"],
+            "violencia_sexual": {
+                "importunacao_sexual": CRITERION_WEIGHTS["impact"]["strong"],
+                "estupro": CRITERION_WEIGHTS["impact"]["critical"]
+            },
+            "xenofobia": {"xenofobia_internacional": CRITERION_WEIGHTS["impact"]["strong"]}
+        },
+        "violacao_privacidade": {
+            "violencia_sexual": {
+                "assedio_sexual": CRITERION_WEIGHTS["impact"]["strong"],
+                "importunacao_sexual": CRITERION_WEIGHTS["impact"]["strong"],
+                "estupro": CRITERION_WEIGHTS["impact"]["critical"]
+            },
+            "violencia_digital": {"exposicao_nao_consentida": CRITERION_WEIGHTS["impact"]["critical"]}
+        },
+        "exposicao_indesejada": {
+            "violencia_digital": {"exposicao_nao_consentida": CRITERION_WEIGHTS["impact"]["critical"]}
+        },
+        "limitacao_acesso": {
+            "capacitismo": {"barreiras_fisicas": CRITERION_WEIGHTS["impact"]["critical"]}
+        },
+        "discriminacao_identidade": {
+            "discriminacao_religiosa": {"ofensa_direta": CRITERION_WEIGHTS["impact"]["strong"]},
+            "xenofobia": {"xenofobia_internacional": CRITERION_WEIGHTS["impact"]["strong"]}
+        }
+    }
+}
 
 def extract_keywords_from_violence_types():
     """
@@ -102,92 +426,47 @@ FIELDS_QUESTIONS = {
 
 def expand_keywords_with_variations(keywords: Dict[str, List[str]]) -> Dict[str, List[str]]:
     """
-    Expande o dicionário de palavras-chave incluindo variações comuns.
+    Versão simplificada que adiciona apenas as variações mais essenciais.
     """
     expanded = {category: list(words) for category, words in keywords.items()}
     
-    # Dicionário de variações comuns por palavra-chave
+    # Dicionário SIMPLIFICADO de variações por palavra-chave
     variations = {
-        # Action type variations
-        "interrupcao": ["interromper", "cortar a fala", "silenciar", "não deixar falar"],
-        "questionamento_capacidade": ["duvidar", "contestar", "questionar capacidade", "desmerecer opinião"],
-        "perseguicao": ["perseguir", "seguir", "stalking", "monitoramento", "observação constante", "vigiar"],
-        "vigilancia": ["vigiar", "monitorar", "observar constantemente"],
-        "ameaca": ["ameaçar", "intimidar", "coagir"],
-        "constrangimento": ["constranger", "causar vergonha", "embaraçar"],
-        "humilhacao": ["humilhar", "ridicularizar", "rebaixar", "insultar"],
-        "comentarios_saude_mental": ["histérico", "emocional", "sensível", "exagerado", "louco", "desequilibrado"],
-        "piadas_estereotipos": ["piadas ofensivas", "estereótipos", "comentários preconceituosos", "zoação"],
-        "coercao_sexual": ["estupro", "abuso", "forçar", "contra vontade", "sexualmente"],
-
-        # NOVAS CATEGORIAS - Adicionadas
-        # Gordofobia
-        "comentarios_sobre_peso": ["gordofobia", "gordo", "gorda", "peso", "corpo grande", "comentário sobre peso"],
-        "piadas_sobre_peso": ["piada sobre gordo", "zoar peso", "gordura", "obeso"],
-        "exclusao_por_peso": ["exclusão por aparência", "discriminação por peso", "tamanho corporal"],
+        # Action type - APENAS variações principais
+        "interrupcao": ["interromper", "cortar fala"],
+        "questionamento_capacidade": ["duvidar", "questionar capacidade"],
+        "perseguicao": ["perseguir", "stalking", "vigiar"],
+        "ameaca": ["ameaçar", "intimidar"],
+        "humilhacao": ["humilhar", "ridicularizar"],
+        "comentarios_saude_mental": ["histérico", "emocional", "louco"],
+        "piadas_estereotipos": ["piada ofensiva", "zoação"],
+        "xingamento": ["xingar", "ofender", "insultar"],
+        "ofensa": ["ofender", "insultar"],
+        "insulto": ["xingar", "ofender"],
+        "coercao_sexual": ["estupro", "forçar"],
         
-        # Capacitismo
-        "negacao_acessibilidade": ["rampa", "elevador", "sinalização", "acessibilidade", "barreira física"],
-        "infantilizacao": ["tratar como criança", "incapaz", "superproteção", "infantilizar"],
+        # Gordofobia - simplificado
+        "comentarios_sobre_peso": ["gordofobia", "gordo", "peso"],
         
-        # Violência Digital
-        "cyberbullying": ["assédio online", "perseguição virtual", "intimidação online"],
-        "mensagens_ofensivas": ["insultos online", "ameaças digitais", "ofensas virtuais"],
-        "exposicao_conteudo": ["vazamento", "nudes", "fotos íntimas", "exposição online", "compartilhar sem permissão"],
+        # Discriminação racial - adicionado
+        "insulto_racial": ["racismo", "macaco", "racial", "negro"],
         
-        # Discriminação Religiosa
-        "zombaria_religiao": ["preconceito religioso", "fé", "crença", "zombar de religião"],
-        "impedimento_pratica_religiosa": ["proibir prática", "impedir ritual", "negar vestimenta religiosa"],
+        # Frequency - simplificado
+        "repetidamente": ["várias vezes", "frequentemente"],
+        "continuamente": ["sempre", "constantemente"],
         
-        # Xenofobia
-        "discriminacao_origem": ["xenofobia", "estrangeiro", "imigrante", "nacionalidade"],
-        "piada_sotaque": ["sotaque", "jeito de falar", "nordestino", "nortista", "caipira", "sotaque regional"],
-
-        # Frequency variations
-        "unica_vez": ["uma única vez", "uma vez só", "caso isolado"],
-        "algumas_vezes": ["poucas vezes", "algumas ocasiões", "eventualmente"],
-        "repetidamente": ["repetidas vezes", "várias vezes", "frequentemente"],
-        "continuamente": ["sempre", "todo dia", "constantemente", "sem parar"],
+        # Target - simplificado
+        "raca_etnia": ["negro", "preto", "cor da pele", "raça"],
+        "genero": ["mulher", "homem", "feminino"],
         
-        # Context variations
-        "sala_aula": ["sala de aula", "durante aula", "na aula", "em classe"],
-        "ambiente_administrativo": ["administração", "secretaria", "departamento"],
-        "local_trabalho": ["trabalho", "empresa", "escritório", "estágio"],
-        "espaco_publico_campus": ["campus", "universidade", "faculdade", "área pública"],
-        "ambiente_online": ["online", "internet", "rede social", "plataforma digital"],
-        "redes_sociais": ["facebook", "instagram", "twitter", "whatsapp", "grupo online"],
-        "evento_academico": ["palestra", "congresso", "simpósio", "seminário"],
-        "ambiente_social": ["festa", "confraternização", "evento social"],
-        "local_culto_religioso": ["igreja", "templo", "centro religioso", "culto"],
+        # Context - simplificado
+        "espaco_publico_campus": ["campus", "rua", "público"],
         
-        # Relationship variations
-        "superior_hierarquico": ["chefe", "professor", "supervisor", "gerente", "diretor"],
-        "colega": ["colega de classe", "colega de trabalho", "par"],
-        "subordinado": ["funcionário", "supervisionado", "orientando"],
-        "desconhecido": ["estranho", "pessoa desconhecida", "não conheço", "nunca vi"],
-        "ex_relacionamento": ["ex-parceiro", "ex-namorado", "ex-cônjuge"],
-        
-        # Target variations
-        "genero": ["mulher", "homem", "feminino", "masculino", "identidade de gênero"],
-        "orientacao_sexual": ["gay", "lésbica", "bissexual", "homossexual", "orientação sexual"],
-        "raca_etnia": ["negro", "preto", "branco", "indígena", "asiático", "raça", "cor da pele"],
-        "deficiencia": ["deficiente", "cadeirante", "cego", "surdo", "neurodivergente"],
-        "aparencia_fisica": ["bonito", "feio", "alto", "baixo", "aparência"],
-        
-        # Impact variations
-        "constrangimento": ["vergonha", "desconforto", "embaraço", "constrangido"],
-        "impacto_participacao": ["deixar de participar", "reduzir participação", "evitar interação"],
-        "danos_emocionais": ["trauma", "estresse", "ansiedade", "depressão", "sofrimento psíquico"],
-        "limitacao_liberdade": ["restringir movimentos", "impedir locomoção", "monitorar passos"],
-        "prejuizo_desempenho": ["notas baixas", "avaliação negativa", "prejuízo acadêmico"],
-        "medo_inseguranca": ["inseguro", "medo", "receio", "insegurança", "apreensão"],
-        "violacao_privacidade": ["invasão", "expor intimidade", "violar privacidade"],
-        "exposicao_indesejada": ["exposição pública", "exposição não consentida"],
-        "limitacao_acesso": ["barreira", "impedir acesso", "dificultar participação"],
-        "discriminacao_identidade": ["discriminar", "preconceito", "negar identidade"]
+        # Impact - simplificado
+        "medo_inseguranca": ["medo", "insegurança"]
     }
     
-    # Aplicar as variações ao dicionário
+    # Aplicar apenas as variações principais
     for category, words in expanded.items():
         new_words = []
         for word in words:

@@ -1,3 +1,40 @@
+# Pesos para critérios de pontuação (movido de confidence_levels.py)
+CRITERION_WEIGHTS = {
+    "behavior": {
+        "critical": 10,    # Comportamento crítico/determinante
+        "relevant": 7,     # Comportamento relevante
+        "supporting": 4    # Comportamento suportivo
+    },
+    "frequency": {
+        "single": 2,           # Uma única vez
+        "few": 4,              # Algumas vezes
+        "repeated": 6,         # Repetidamente
+        "continuous": 8        # Continuamente
+    },
+    "context": {
+        "critical": 10,    # Contexto determinante (ex: local de trabalho para assédio moral)
+        "relevant": 5,     # Contexto relevante
+        "supporting": 2    # Contexto menos relevante
+    },
+    "target": {
+        "critical": 10,    # Característica determinante
+        "relevant": 7,     # Característica relevante
+        "supporting": 3    # Característica complementar
+    },
+    "impact": {
+        "critical": 9,     # Impacto determinante
+        "strong": 7,       # Impacto forte
+        "moderate": 4,     # Impacto moderado
+        "mild": 2          # Impacto leve
+    },
+    "relationship": {
+        "hierarchical": 5, # Relação hierárquica
+        "peer": 3,         # Relação entre pares
+        "ex_partner": 5,   # Ex-parceiros
+        "unknown": 1       # Desconhecido
+    }
+}
+
 # Definição da estrutura hierárquica dos tipos de violência
 VIOLENCE_TYPES = {
     "microagressoes": {
@@ -241,8 +278,78 @@ VIOLENCE_TYPES = {
                 "comportamentos": ["negar serviços", "hostilizar por nacionalidade", "comentários xenófobos"]
             }
         }
+    },
+    "discriminacao_racial": {
+        "definicao": "Discriminação, preconceito ou estigmatização baseada em raça, cor, etnia ou características fenotípicas.",
+        "gravidade": "alta",
+        "palavras_chave": ["racismo", "insulto racial", "discriminação racial", "preconceito racial"],
+        "canais_denuncia": ["Ouvidoria", "Comissão de Ética", "Polícia"],
+        "recomendacoes": [
+            "Registre os incidentes com detalhes sobre data, hora e palavras utilizadas",
+            "Busque apoio em núcleos de direitos humanos ou coletivos antirracistas",
+            "Reporte comentários racistas imediatamente às autoridades competentes"
+        ],
+        "subtipos": {
+            "ofensa_direta": {
+                "definicao": "Insultos, piadas e comentários depreciativos explícitos relacionados à raça/etnia.",
+                "palavras_chave": ["insulto racial", "xingamento", "ofensa"],
+                "comportamentos": ["usar termos pejorativos", "fazer comparações ofensivas"]
+            },
+            "discriminacao_estrutural": {
+                "definicao": "Exclusão sistemática e barreiras baseadas em raça/etnia.",
+                "palavras_chave": ["exclusão", "barreira", "tratamento diferenciado"],
+                "comportamentos": ["negar acesso", "excluir de atividades", "tratamento desfavorável"]
+            }
+        }
     }
+}
 
+
+
+SEVERITY_RANKING = {
+    "violencia_sexual": {
+        "estupro": 10,
+        "importunacao_sexual": 8,
+        "assedio_sexual": 7,
+        "outras_condutas_conotacao_sexual": 5
+    },
+    "perseguicao": 7,
+    "abuso_psicologico": 6,
+    "assedio_moral_genero": 6,
+    "discriminacao_genero": {
+        "discriminacao_flagrante": 5,
+        "discriminacao_sutil": 4
+    },
+    "microagressoes": {
+        "interrupcoes_constantes": 2,
+        "questionar_julgamento": 2,
+        "comentarios_saude_mental": 3,
+        "estereotipos": 2
+    },
+    "gordofobia": {
+        "discriminacao_direta": 4,
+        "discriminacao_estrutural": 5
+    },
+    "capacitismo": {
+        "barreiras_fisicas": 5,
+        "barreiras_atitudinais": 4
+    },
+    "violencia_digital": {
+        "cyberbullying": 5,
+        "exposicao_nao_consentida": 8
+    },
+    "discriminacao_religiosa": {
+        "ofensa_direta": 4,
+        "discriminacao_institucional": 5
+    },
+    "xenofobia": {
+        "discriminacao_regional": 4,
+        "xenofobia_internacional": 5
+    },
+    "discriminacao_racial": {
+        "ofensa_direta": 7,
+        "discriminacao_estrutural": 8
+    }
 }
 
 # Definição da gravidade e procedimentos gerais
@@ -278,3 +385,12 @@ REPORT_CONTACT = {
         "procedimento": "Acionar em situações de emergência no campus."
     }
 }
+
+def get_severity(vtype, subtype=None):
+    """Obtém o nível de gravidade para um tipo/subtipo de violência."""
+    if vtype in SEVERITY_RANKING:
+        if isinstance(SEVERITY_RANKING[vtype], dict) and subtype:
+            return SEVERITY_RANKING[vtype].get(subtype, 0)
+        elif not isinstance(SEVERITY_RANKING[vtype], dict):
+            return SEVERITY_RANKING[vtype]
+    return 0
