@@ -1,7 +1,8 @@
 from experta.engine import KnowledgeEngine
+from experta import Fact
 from experta.rule import Rule
 from experta.deffacts import DefFacts
-from experta.conditionalelement import AS, TEST, OR, NOT, AND, MATCH
+from experta import TEST, AS, OR, NOT, AND
 from typing import Dict, List, Any, Optional
 import json
 
@@ -13,14 +14,6 @@ from .facts import (
 )
 from knowledge_base.confidence_levels import *
 from knowledge_base.violence_types import VIOLENCE_TYPES
-
-class Fact:
-    def __init__(self, **kwargs):
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-    
-    def __getitem__(self, key):
-        return getattr(self, key)
 
 class ViolenceRules(KnowledgeEngine):
     """
@@ -38,7 +31,6 @@ class ViolenceRules(KnowledgeEngine):
     
     @DefFacts()
     def initial_facts(self):
-        """Define fatos iniciais para o motor."""
         yield Fact(engine_ready=True)
     
     # REGRAS PARA MICROAGRESSÕES
@@ -443,11 +435,7 @@ class ViolenceRules(KnowledgeEngine):
     
     # REGRA PARA CONSOLIDAR RESULTADOS
     
-    @Rule(
-        AS.classifications << ViolenceClassification(),
-        TEST(lambda classifications: True)  # Sempre dispara quando houver classificações
-    )
-    def consolidate_results(self, classifications):
+    def consolidate_results(self):
         """
         Consolida os resultados de todas as classificações.
         
@@ -455,7 +443,7 @@ class ViolenceRules(KnowledgeEngine):
         terem sido processadas. Ela resolve ambiguidades e cria um resultado
         final de análise.
         """
-        # Coletar todas as classificações
+
         all_classifications = []
         for fact_id in self.get_matching_facts(ViolenceClassification):
             fact = self.facts[fact_id]
@@ -470,14 +458,10 @@ class ViolenceRules(KnowledgeEngine):
         if not all_classifications:
             print("⚠️ Nenhuma classificação identificada")
             return
-        
-        # Verificar se há múltiplos tipos para reportar
+
         report_multiple, ambiguity_level = should_report_multiple(all_classifications)
-        
-        # Encontrar o resultado principal
         primary_result = resolve_ambiguity(all_classifications)
-        
-        # Declarar o resultado final da análise
+
         self.declare(
             AnalysisResult(
                 classifications=all_classifications,
@@ -486,7 +470,7 @@ class ViolenceRules(KnowledgeEngine):
                 ambiguity_level=ambiguity_level
             )
         )
-        
+
         print("\n✅ Análise consolidada:")
         print(f"- Resultado principal: {primary_result['violence_type']}{' - ' + primary_result['subtype'] if primary_result.get('subtype') else ''}")
         print(f"- Confiança: {primary_result['confidence']:.2f}")

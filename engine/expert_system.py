@@ -1,4 +1,4 @@
-from typing import Dict, List, Any
+from typing import Dict, Any
 from .rules import ViolenceRules
 from .text_processor import TextProcessor
 from .facts import AnalysisResult
@@ -48,13 +48,13 @@ class ExpertSystem:
             "ambiguity_level": 0.0
         }
         
-        # Buscar resultado da análise
-        for fact_id in self.engine.get_matching_facts(AnalysisResult):
-            result = self.engine.facts[fact_id]
-            results["classifications"] = result["classifications"]
-            results["primary_result"] = result["primary_result"]
-            results["multiple_types"] = result["multiple_types"]
-            results["ambiguity_level"] = result["ambiguity_level"]
-            break
+        # Buscar resultado da análise — usando get_facts para pegar fatos do tipo AnalysisResult
+        for fact in self.engine.facts.values():
+            if isinstance(fact, AnalysisResult):
+                results["classifications"] = getattr(fact, "classifications", [])
+                results["primary_result"] = getattr(fact, "primary_result", None)
+                results["multiple_types"] = getattr(fact, "multiple_types", False)
+                results["ambiguity_level"] = getattr(fact, "ambiguity_level", 0.0)
+                break
         
         return results

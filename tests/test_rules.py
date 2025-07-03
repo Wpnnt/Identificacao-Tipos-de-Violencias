@@ -157,49 +157,44 @@ class TestViolenceRules(unittest.TestCase):
 
 class TestExpertSystemIntegration(unittest.TestCase):
     """Testes de integração para o ExpertSystem."""
-    
-    def setUp(self):
-        """Configura o ambiente de teste com mocks."""
-        # Criar mock para o TextProcessor
-        self.mock_text_processor = MagicMock(spec=TextProcessor)
-        
-        # Configurar o mock para retornar fatos simulados
-        self.mock_text_processor.create_experta_facts.return_value = [
+
+    @patch('engine.expert_system.TextProcessor')  # Mocka o TextProcessor
+    def test_analyze_text_integration(self, mock_text_processor_class):
+        """Testa se o fluxo de análise de texto funciona corretamente."""
+
+        # Mock do TextProcessor
+        mock_text_processor = mock_text_processor_class.return_value
+        mock_text_processor.create_experta_facts.return_value = [
             TextRelato(text="Teste", processed=True),
             KeywordFact(category="action_type", keyword="interrupcao"),
             KeywordFact(category="frequency", keyword="repetidamente")
         ]
-        
-        # Criar o sistema expert com o processador mockado
-        self.expert_system = ExpertSystem()
-        self.expert_system.text_processor = self.mock_text_processor
-    
-    @patch('engine.expert_system.ViolenceRules')
-    def test_analyze_text_integration(self, mock_rules_class):
-        """Testa se o fluxo de análise de texto funciona corretamente."""
-        # Configurar o mock do motor de regras
-        mock_engine = mock_rules_class.return_value
-        mock_engine.facts = {}
-        mock_engine.get_matching_facts.return_value = [1]  # Simular um fato de resultado
-        mock_engine.facts[1] = {
-            'classifications': [{'violence_type': 'microagressoes', 'subtype': 'interrupcoes_constantes'}],
-            'primary_result': {'violence_type': 'microagressoes', 'subtype': 'interrupcoes_constantes'},
-            'multiple_types': False,
-            'ambiguity_level': 0.0
+
+        # Instanciar o ExpertSystem (com o TextProcessor mockado automaticamente)
+        expert_system = ExpertSystem()
+
+        # Substituir o motor de regras por um mock manualmente
+        mock_engine = MagicMock()
+        mock_engine.facts = {
+            1: AnalysisResult(
+                classifications=[
+                    {'violence_type': 'microagressoes', 'subtype': 'interrupcoes_constantes'}
+                ],
+                primary_result={'violence_type': 'microagressoes', 'subtype': 'interrupcoes_constantes'},
+                multiple_types=False,
+                ambiguity_level=0.0
+            )
         }
-        
-        # Substituir o motor no sistema expert
-        self.expert_system.engine = mock_engine
-        
-        # Executar a análise
-        result = self.expert_system.analyze_text("Teste")
-        
+        expert_system.engine = mock_engine
+
+        # Executar o método
+        result = expert_system.analyze_text("Teste")
+
         # Verificações
-        self.mock_text_processor.create_experta_facts.assert_called_once_with("Teste")
+        mock_text_processor.create_experta_facts.assert_called_once_with("Teste")
         mock_engine.reset.assert_called_once()
         mock_engine.run.assert_called_once()
-        
-        # Verificar o resultado
+
         self.assertEqual(result['primary_result']['violence_type'], 'microagressoes')
         self.assertEqual(result['primary_result']['subtype'], 'interrupcoes_constantes')
         self.assertFalse(result['multiple_types'])
