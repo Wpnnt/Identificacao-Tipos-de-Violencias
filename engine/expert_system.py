@@ -37,9 +37,8 @@ class ExpertSystem:
         """Coleta resultados do motor após execução."""
         results = {
             "classifications": [],
-            "primary_result": {"violence_type": "", "subtype": "", "confidence": 0.0},
-            "multiple_types": False,
-            "ambiguity_level": 0.0
+            "primary_result": {"violence_type": "", "subtype": ""},
+            "multiple_types": False
         }
         
         # Buscar resultado da análise
@@ -53,7 +52,6 @@ class ExpertSystem:
                     results["primary_result"] = primary_result
                 
                 results["multiple_types"] = getattr(fact, "multiple_types", False)
-                results["ambiguity_level"] = getattr(fact, "ambiguity_level", 0.0)
                 break
         
         # Se não encontrou AnalysisResult ou classifications está vazio, busque diretamente ViolenceClassification
@@ -64,21 +62,12 @@ class ExpertSystem:
                 classifications.append({
                     "violence_type": fact["violence_type"],
                     "subtype": fact["subtype"],
-                    "confidence": fact["confidence_level"],
-                    "score": fact["score"],
                     "explanation": self.engine.get_explanation(fact["violence_type"], fact["subtype"])
                 })
             
             # Se encontrou classificações, use-as
             if classifications:
                 results["classifications"] = classifications
-                
-                # Determine a classificação principal
-                primary = sorted(
-                    classifications, 
-                    key=lambda x: (x.get("score", 0), x.get("confidence", 0)),
-                    reverse=True
-                )[0]
-                results["primary_result"] = primary
+                results["primary_result"] = classifications[0]
         
         return results

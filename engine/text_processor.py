@@ -4,12 +4,11 @@ import json
 
 from knowledge_base.keywords_dictionary import KEYWORDS_DICT, FIELDS_QUESTIONS
 from utils.groq_integration import GroqAPI
-from engine.classifier import classify_by_mapping
+
 # Importar fatos do Experta para criar objetos compatíveis com o motor de regras
 from engine.facts import (
     TextRelato, KeywordFact, ViolenceBehavior, ContextFact, FrequencyFact,
-    TargetFact, RelationshipFact, ImpactFact, ViolenceClassification,
-    create_facts_from_groq_response
+    TargetFact, RelationshipFact, ImpactFact, create_facts_from_groq_response
 )
 
 class TextProcessor:
@@ -41,93 +40,13 @@ class TextProcessor:
 
         facts = self._extract_facts_from_keywords(keywords)
 
-        if missing_critical:
-            return {
-                "status": "incomplete",
-                "identified_keywords": keywords,
-                "missing_fields": missing,
-                "questions": questions,
-                "facts": facts
-            }
-
-        classifications = classify_by_mapping(facts)
         return {
-            "status": "complete",
+            "status": "complete" if not missing_critical else "incomplete",
             "identified_keywords": keywords,
-            "facts": facts,
-            "classifications": classifications
+            "missing_fields": missing,
+            "questions": questions,
+            "facts": facts
         }
-
-    # NOVO MÉTODO: Cria objetos Fact do Experta
-    def create_experta_facts(self, text: str) -> List[Any]:
-        """
-        Cria fatos Experta a partir de um texto, para inserção no motor de regras.
-        
-        Args:
-            text: Texto do relato
-            
-        Returns:
-            List[Fact]: Lista de fatos para o motor Experta
-        """
-        print(f"\n🔍 Processando texto para criar fatos: {text[:100]}{'...' if len(text) > 100 else ''}")
-        
-        # Adicionar o TextRelato original
-        facts = [TextRelato(text=text, processed=True)]
-        
-        try:
-            # Extrair palavras-chave usando o Groq
-            prompt = self.groq_api.build_prompt(text, KEYWORDS_DICT)
-            response = self.groq_api.send_request(prompt)
-            
-            if "identified_keywords" in response and response["identified_keywords"]:
-                print(f"✅ Palavras-chave identificadas: {json.dumps(response['identified_keywords'], indent=2)}")
-                
-                # Converter resposta em fatos Experta
-                keyword_facts = create_facts_from_groq_response(response)
-                facts.extend(keyword_facts)
-                
-                for fact in keyword_facts:
-                    print(f"📌 Criado fato Experta: {fact}")
-            else:
-                print("⚠️ Nenhuma palavra-chave identificada no texto")
-                # Caso não encontre palavras-chave, usar classificação direta
-                # e criar fatos ViolenceClassification
-                result = self._direct_classification(text)
-                facts.extend(result)
-        except Exception as e:
-            print(f"❌ Erro ao processar texto: {str(e)}")
-            # Usar classificação direta como fallback
-            result = self._direct_classification(text)
-            facts.extend(result)
-        
-        return facts
-    
-    def _direct_classification(self, text: str) -> List[Any]:
-        """
-        Realiza classificação direta e retorna fatos ViolenceClassification.
-        
-        Args:
-            text: Texto para classificação
-            
-        Returns:
-            List: Lista de fatos ViolenceClassification
-        """
-        print("🔄 Usando classificação direta do texto...")
-        
-        classifications = classify_by_mapping({"text": text})
-        facts = []
-        
-        for c in classifications:
-            fact = ViolenceClassification(
-                violence_type=c["violence_type"],
-                subtype=c.get("subtype"),
-                score=c.get("score", 0),
-                confidence_level=c.get("confidence", 0.0)
-            )
-            facts.append(fact)
-            print(f"📌 Criado fato de classificação: {fact}")
-        
-        return facts
 
     def _process_followup(self, follow_up_text: str, previous_keywords: Dict, missing_fields: List[str]) -> Dict[str, Any]:
         """
@@ -144,21 +63,12 @@ class TextProcessor:
         questions = response.get("follow_up_questions", [])
         missing_critical = any(field in missing for field in ["action_type"])
 
-        if missing_critical:
-            return {
-                "status": "incomplete",
-                "identified_keywords": combined_keywords,
-                "missing_fields": missing,
-                "questions": questions,
-                "facts": facts
-            }
-
-        classifications = classify_by_mapping(facts)
         return {
-            "status": "complete",
+            "status": "complete" if not missing_critical else "incomplete",
             "identified_keywords": combined_keywords,
-            "facts": facts,
-            "classifications": classifications
+            "missing_fields": missing,
+            "questions": questions,
+            "facts": facts
         }
 
     def _extract_facts_from_keywords(self, keywords: Dict) -> Dict:
@@ -182,12 +92,6 @@ class TextProcessor:
     def create_experta_facts(self, text: str) -> List[Any]:
         """
         Cria fatos Experta a partir de um texto, para inserção no motor de regras.
-        
-        Args:
-            text: Texto do relato
-            
-        Returns:
-            List[Fact]: Lista de fatos para o motor Experta
         """
         print(f"\n🔍 Processando texto para criar fatos: {text[:100]}{'...' if len(text) > 100 else ''}")
         
@@ -195,35 +99,40 @@ class TextProcessor:
         facts = [TextRelato(text=text, processed=True)]
         
         try:
-            # Usar seu método existente para processar o texto
-            result = self.process_user_text(text)
+            # Extrair palavras-chave usando o Groq
+            prompt = self.groq_api.build_prompt(text, KEYWORDS_DICT)
+            response = self.groq_api.send_request(prompt)
             
-            # Criar fatos a partir das keywords identificadas
-            if "identified_keywords" in result and result["identified_keywords"]:
-                keywords = result["identified_keywords"]
+            if "identified_keywords" in response and response["identified_keywords"]:
+                print(f"✅ Palavras-chave identificadas: {json.dumps(response['identified_keywords'], indent=2)}")
                 
-                # Converter keywords em fatos Experta usando a função existente
-                keyword_facts = create_facts_from_groq_response({"identified_keywords": keywords})
-                facts.extend(keyword_facts)
+                # Converter resposta em fatos Experta
+                keywords = response["identified_keywords"]
                 
-                for fact in keyword_facts:
+                # Criar fatos KeywordFact
+                for category, values in keywords.items():
+                    for keyword in values:
+                        facts.append(KeywordFact(category=category, keyword=keyword))
+                        
+                        # Criar fatos específicos correspondentes
+                        if category == "action_type":
+                            facts.append(ViolenceBehavior(behavior_type=keyword))
+                        elif category == "context":
+                            facts.append(ContextFact(location=keyword))
+                        elif category == "frequency":
+                            facts.append(FrequencyFact(value=keyword))
+                        elif category == "target":
+                            facts.append(TargetFact(characteristic=keyword))
+                        elif category == "relationship":
+                            facts.append(RelationshipFact(type=keyword))
+                        elif category == "impact":
+                            facts.append(ImpactFact(type=keyword))
+                
+                for fact in facts:
                     print(f"📌 Criado fato Experta: {fact}")
-            
-            # Se houver classificações diretas, adicione-as como ViolenceClassification
-            if "classifications" in result and result["classifications"]:
-                for c in result["classifications"]:
-                    fact = ViolenceClassification(
-                        violence_type=c["violence_type"],
-                        subtype=c.get("subtype"),
-                        score=c.get("score", 0),
-                        confidence_level=c.get("confidence", 0.0)
-                    )
-                    facts.append(fact)
-                    
+            else:
+                print("⚠️ Nenhuma palavra-chave identificada no texto")
         except Exception as e:
             print(f"❌ Erro ao processar texto: {str(e)}")
-            # Usar classificação direta como fallback se disponível
-            if hasattr(self, '_direct_classification'):
-                facts.extend(self._direct_classification(text))
         
         return facts

@@ -4,24 +4,18 @@ from experta.rule import Rule
 from experta.deffacts import DefFacts
 from experta import TEST, AS, OR, NOT, AND
 from typing import Dict, List, Any, Optional
-import json
 
 # Importações dos fatos necessários para o motor de regras
 from .facts import (
     TextRelato, KeywordFact, ViolenceBehavior, ContextFact, FrequencyFact,
     TargetFact, RelationshipFact, ImpactFact, ViolenceClassification,
-    AnalysisResult, create_facts_from_groq_response, calculate_confidence
+    AnalysisResult
 )
-from knowledge_base.confidence_levels import *
 from knowledge_base.violence_types import VIOLENCE_TYPES
 
 class ViolenceRules(KnowledgeEngine):
     """
     Motor de regras para identificação de tipos de violência.
-    
-    Este motor utiliza a biblioteca Experta para implementar um sistema
-    baseado em regras que classifica fatos estruturados em tipos de violência
-    conforme definidos na base de conhecimento.
     """
     
     def __init__(self):
@@ -33,6 +27,11 @@ class ViolenceRules(KnowledgeEngine):
     def initial_facts(self):
         yield Fact(engine_ready=True)
     
+    @Rule(Fact(engine_ready=True))
+    def rule_diagnostic(self):
+        """Regra de diagnóstico para verificar o funcionamento do motor."""
+        print("✅ DIAGNÓSTICO: Motor de regras funcionando!")
+        
     # REGRAS PARA MICROAGRESSÕES
     
     @Rule(
@@ -49,7 +48,7 @@ class ViolenceRules(KnowledgeEngine):
     )
     def detect_interrupcoes_constantes(self):
         """Detecta microagressões do tipo interrupções constantes."""
-        self.add_score("microagressoes", "interrupcoes_constantes", 15, [
+        self.create_classification("microagressoes", "interrupcoes_constantes", [
             "Identificado comportamento de interrupção",
             "Ocorre repetidamente ou continuamente"
         ])
@@ -66,7 +65,7 @@ class ViolenceRules(KnowledgeEngine):
     )
     def detect_questionar_julgamento(self):
         """Detecta microagressões do tipo questionamento de capacidade."""
-        self.add_score("microagressoes", "questionar_julgamento", 14, [
+        self.create_classification("microagressoes", "questionar_julgamento", [
             "Identificado comportamento de questionar capacidade",
             "Direcionado a características de gênero"
         ])
@@ -79,7 +78,7 @@ class ViolenceRules(KnowledgeEngine):
     )
     def detect_comentarios_saude_mental(self):
         """Detecta microagressões relacionadas a comentários sobre saúde mental."""
-        self.add_score("microagressoes", "comentarios_saude_mental", 10, [
+        self.create_classification("microagressoes", "comentarios_saude_mental", [
             "Identificados comentários relacionados à saúde mental"
         ])
     
@@ -91,7 +90,7 @@ class ViolenceRules(KnowledgeEngine):
     )
     def detect_estereotipos(self):
         """Detecta microagressões baseadas em estereótipos."""
-        self.add_score("microagressoes", "estereotipos", 12, [
+        self.create_classification("microagressoes", "estereotipos", [
             "Identificadas piadas ou comentários baseados em estereótipos"
         ])
     
@@ -108,7 +107,7 @@ class ViolenceRules(KnowledgeEngine):
     )
     def detect_perseguicao(self):
         """Detecta comportamento de perseguição."""
-        self.add_score("perseguicao", None, 15, [
+        self.create_classification("perseguicao", None, [
             "Identificado comportamento de perseguição ou vigilância constante"
         ])
     
@@ -126,7 +125,7 @@ class ViolenceRules(KnowledgeEngine):
     )
     def detect_perseguicao_com_medo(self):
         """Detecta perseguição que causa medo/insegurança."""
-        self.add_score("perseguicao", None, 20, [
+        self.create_classification("perseguicao", None, [
             "Identificado comportamento de perseguição",
             "Causa medo ou insegurança na vítima"
         ])
@@ -147,7 +146,7 @@ class ViolenceRules(KnowledgeEngine):
     )
     def detect_discriminacao_flagrante(self):
         """Detecta discriminação flagrante baseada em gênero."""
-        self.add_score("discriminacao_genero", "discriminacao_flagrante", 15, [
+        self.create_classification("discriminacao_genero", "discriminacao_flagrante", [
             "Identificado comportamento de exclusão",
             "Direcionado a características de gênero ou orientação sexual"
         ])
@@ -170,7 +169,7 @@ class ViolenceRules(KnowledgeEngine):
     )
     def detect_discriminacao_sutil(self):
         """Detecta discriminação sutil baseada em gênero."""
-        self.add_score("discriminacao_genero", "discriminacao_sutil", 17, [
+        self.create_classification("discriminacao_genero", "discriminacao_sutil", [
             "Identificado comportamento de questionamento de capacidade",
             "Direcionado a características de gênero",
             "Ocorre repetidamente ou continuamente"
@@ -190,7 +189,7 @@ class ViolenceRules(KnowledgeEngine):
     )
     def detect_abuso_psicologico(self):
         """Detecta abuso psicológico."""
-        self.add_score("abuso_psicologico", None, 16, [
+        self.create_classification("abuso_psicologico", None, [
             "Identificado comportamento de ameaça, humilhação ou constrangimento"
         ])
     
@@ -208,7 +207,7 @@ class ViolenceRules(KnowledgeEngine):
     )
     def detect_abuso_psicologico_hierarquico(self):
         """Detecta abuso psicológico com relação hierárquica."""
-        self.add_score("abuso_psicologico", None, 20, [
+        self.create_classification("abuso_psicologico", None, [
             "Identificado comportamento de ameaça ou humilhação",
             "Praticado por superior hierárquico"
         ])
@@ -231,7 +230,7 @@ class ViolenceRules(KnowledgeEngine):
     )
     def detect_assedio_moral_genero(self):
         """Detecta assédio moral baseado em gênero."""
-        self.add_score("assedio_moral_genero", None, 20, [
+        self.create_classification("assedio_moral_genero", None, [
             "Identificado comportamento de pressão excessiva com tarefas",
             "Direcionado a características de gênero",
             "Ocorre em local de trabalho"
@@ -247,7 +246,7 @@ class ViolenceRules(KnowledgeEngine):
     )
     def detect_assedio_sexual(self):
         """Detecta assédio sexual."""
-        self.add_score("violencia_sexual", "assedio_sexual", 10, [
+        self.create_classification("violencia_sexual", "assedio_sexual", [
             "Identificado comportamento de natureza sexual não consentido"
         ])
     
@@ -261,7 +260,7 @@ class ViolenceRules(KnowledgeEngine):
     )
     def detect_importunacao_sexual(self):
         """Detecta importunação sexual."""
-        self.add_score("violencia_sexual", "importunacao_sexual", 10, [
+        self.create_classification("violencia_sexual", "importunacao_sexual", [
             "Identificado contato físico não consentido ou ato obsceno"
         ])
     
@@ -275,7 +274,7 @@ class ViolenceRules(KnowledgeEngine):
     )
     def detect_estupro(self):
         """Detecta estupro."""
-        self.add_score("violencia_sexual", "estupro", 10, [
+        self.create_classification("violencia_sexual", "estupro", [
             "Identificado comportamento de coerção sexual ou relação não consentida"
         ])
     
@@ -291,7 +290,7 @@ class ViolenceRules(KnowledgeEngine):
     )
     def detect_gordofobia_direta(self):
         """Detecta discriminação direta por gordofobia."""
-        self.add_score("gordofobia", "discriminacao_direta", 12, [
+        self.create_classification("gordofobia", "discriminacao_direta", [
             "Identificados comentários ou piadas sobre peso/corpo"
         ])
     
@@ -303,7 +302,7 @@ class ViolenceRules(KnowledgeEngine):
     )
     def detect_gordofobia_estrutural(self):
         """Detecta discriminação estrutural por gordofobia."""
-        self.add_score("gordofobia", "discriminacao_estrutural", 15, [
+        self.create_classification("gordofobia", "discriminacao_estrutural", [
             "Identificada exclusão baseada em peso/aparência física"
         ])
     
@@ -317,7 +316,7 @@ class ViolenceRules(KnowledgeEngine):
     )
     def detect_barreiras_fisicas(self):
         """Detecta barreiras físicas de acessibilidade."""
-        self.add_score("capacitismo", "barreiras_fisicas", 12, [
+        self.create_classification("capacitismo", "barreiras_fisicas", [
             "Identificada negação de acessibilidade ou barreiras físicas"
         ])
     
@@ -333,7 +332,7 @@ class ViolenceRules(KnowledgeEngine):
     )
     def detect_barreiras_atitudinais(self):
         """Detecta barreiras atitudinais de acessibilidade."""
-        self.add_score("capacitismo", "barreiras_atitudinais", 14, [
+        self.create_classification("capacitismo", "barreiras_atitudinais", [
             "Identificado comportamento de infantilização",
             "Direcionado a pessoa com deficiência"
         ])
@@ -350,7 +349,7 @@ class ViolenceRules(KnowledgeEngine):
     )
     def detect_cyberbullying(self):
         """Detecta cyberbullying."""
-        self.add_score("violencia_digital", "cyberbullying", 14, [
+        self.create_classification("violencia_digital", "cyberbullying", [
             "Identificado comportamento de cyberbullying ou mensagens ofensivas"
         ])
     
@@ -362,7 +361,7 @@ class ViolenceRules(KnowledgeEngine):
     )
     def detect_exposicao_nao_consentida(self):
         """Detecta exposição não consentida."""
-        self.add_score("violencia_digital", "exposicao_nao_consentida", 8, [
+        self.create_classification("violencia_digital", "exposicao_nao_consentida", [
             "Identificada exposição não consentida de conteúdo pessoal"
         ])
     
@@ -380,7 +379,7 @@ class ViolenceRules(KnowledgeEngine):
     )
     def detect_ofensa_religiosa_direta(self):
         """Detecta ofensa religiosa direta."""
-        self.add_score("discriminacao_religiosa", "ofensa_direta", 12, [
+        self.create_classification("discriminacao_religiosa", "ofensa_direta", [
             "Identificada zombaria ou piadas sobre religião",
             "Direcionada a características religiosas da vítima"
         ])
@@ -393,7 +392,7 @@ class ViolenceRules(KnowledgeEngine):
     )
     def detect_discriminacao_religiosa_institucional(self):
         """Detecta discriminação religiosa institucional."""
-        self.add_score("discriminacao_religiosa", "discriminacao_institucional", 16, [
+        self.create_classification("discriminacao_religiosa", "discriminacao_institucional", [
             "Identificado impedimento de práticas religiosas"
         ])
     
@@ -411,7 +410,7 @@ class ViolenceRules(KnowledgeEngine):
     )
     def detect_discriminacao_regional(self):
         """Detecta discriminação regional."""
-        self.add_score("xenofobia", "discriminacao_regional", 14, [
+        self.create_classification("xenofobia", "discriminacao_regional", [
             "Identificadas piadas ou comentários sobre sotaque",
             "Direcionados à origem regional da vítima"
         ])
@@ -428,31 +427,101 @@ class ViolenceRules(KnowledgeEngine):
     )
     def detect_xenofobia_internacional(self):
         """Detecta xenofobia internacional."""
-        self.add_score("xenofobia", "xenofobia_internacional", 12, [
+        self.create_classification("xenofobia", "xenofobia_internacional", [
             "Identificada discriminação baseada em origem",
             "Direcionada à origem estrangeira da vítima"
         ])
-    
-    # REGRA PARA CONSOLIDAR RESULTADOS
+
+    # REGRAS PARA DISCRIMINAÇÃO RACIAL
+
+    @Rule(
+        OR(
+            ViolenceBehavior(behavior_type="insulto"),
+            ViolenceBehavior(behavior_type="piadas_estereotipos"),
+            ViolenceBehavior(behavior_type="xingamento"),  # Adicionado xingamento
+            KeywordFact(category="action_type", keyword="insulto"),
+            KeywordFact(category="action_type", keyword="piadas_estereotipos"),
+            KeywordFact(category="action_type", keyword="xingamento")  # Adicionado xingamento
+        ),
+        OR(
+            TargetFact(characteristic="raca_etnia"),
+            KeywordFact(category="target", keyword="raca_etnia")
+        )
+    )
+    def detect_discriminacao_racial_direta(self):
+        """Detecta discriminação racial direta."""
+        self.create_classification("discriminacao_racial", "ofensa_direta", [
+            "Identificado insulto ou comentário pejorativo",
+            "Direcionado à raça/etnia da vítima"
+        ])
+
+
+    @Rule(
+        OR(
+            ViolenceBehavior(behavior_type="ofensa"),
+            KeywordFact(category="action_type", keyword="ofensa"),
+            KeywordFact(category="action_type", keyword="insulto_racial"),
+            KeywordFact(category="action_type", keyword="ofensa")
+        ),
+        OR(
+            TargetFact(characteristic="raca_etnia"),
+            KeywordFact(category="target", keyword="raca_etnia"),
+            TargetFact(characteristic="negro"),
+            KeywordFact(category="target", keyword="negro"),
+            TargetFact(characteristic="cor da pele"),
+            KeywordFact(category="target", keyword="cor da pele")
+        )
+    )
+    def detect_discriminacao_racial_ofensa(self):
+        """Detecta discriminação racial por ofensa direta."""
+        self.create_classification("discriminacao_racial", "ofensa_direta", [
+            "Identificada ofensa verbal de natureza racial",
+            "Direcionada à raça/etnia/cor da vítima"
+        ])
+        
+    # Método simplificado para criar classificações
+    def create_classification(self, violence_type, subtype=None, explanations=None):
+        """
+        Cria uma classificação de violência.
+        
+        Args:
+            violence_type: Tipo principal de violência
+            subtype: Subtipo de violência (opcional)
+            explanations: Lista de explicações sobre a classificação (opcional)
+        """
+        # Garantir que subtype nunca seja None para consistência
+        subtype = subtype or ""
+        
+        # Verificar se já existe uma classificação para este tipo/subtipo
+        for fact_id in self.get_matching_facts(ViolenceClassification):
+            fact = self.facts[fact_id]
+            if fact["violence_type"] == violence_type and fact["subtype"] == subtype:
+                # Já existe, não precisamos criar outra
+                return
+        
+        # Armazenar explicações
+        key = f"{violence_type}_{subtype}" if subtype else violence_type
+        if explanations:
+            if key not in self.explanations:
+                self.explanations[key] = []
+            self.explanations[key].extend(explanations)
+        
+        # Criar nova classificação (sem score ou confidence)
+        self.declare(
+            ViolenceClassification(
+                violence_type=violence_type,
+                subtype=subtype,
+                explanation=explanations or []
+            )
+        )
+        print(f"📊 Criado {key}")
     
     def run(self, steps=None):
         """
         Executa o motor e consolida os resultados automaticamente.
-        
-        Sobrescreve o método run() da classe KnowledgeEngine para
-        garantir que os resultados sejam consolidados automaticamente
-        após todas as regras serem executadas.
-        
-        Args:
-            steps: Número máximo de regras a executar (opcional)
         """
-        # Garantir que steps seja um valor inteiro válido antes de passar para super().run()
-        steps_value = -1 if steps is None else steps  # -1 executa até o fim
-        
-        # Chamar a implementação original do KnowledgeEngine com um valor numérico válido
+        steps_value = -1 if steps is None else steps
         super().run(steps_value)
-        
-        # Consolidar resultados automaticamente após a execução
         print("\n🔄 Consolidando resultados automaticamente...")
         self.consolidate_results()
 
@@ -465,135 +534,42 @@ class ViolenceRules(KnowledgeEngine):
             fact = self.facts[fact_id]
             all_classifications.append({
                 "violence_type": fact["violence_type"],
-                "subtype": fact["subtype"] or "",  # Garantir que subtype nunca seja None
-                "score": fact["score"],
-                "confidence": fact["confidence_level"],
+                "subtype": fact["subtype"] or "",
                 "explanation": self.get_explanation(fact["violence_type"], fact["subtype"])
             })
         
-        # Mesmo que não haja classificações, criar um resultado vazio para evitar erros
         if not all_classifications:
             print("⚠️ Nenhuma classificação identificada, criando resultado vazio")
             self.declare(
                 AnalysisResult(
                     classifications=[],
-                    primary_result={"violence_type": "", "subtype": "", "confidence": 0.0},
-                    multiple_types=False,
-                    ambiguity_level=0.0
+                    primary_result={"violence_type": "", "subtype": ""},
+                    multiple_types=False
                 )
             )
             return
-
-        report_multiple, ambiguity_level = should_report_multiple(all_classifications)
-        primary_result = resolve_ambiguity(all_classifications)
+        
+        # Reportar múltiplos se houver mais de um
+        report_multiple = len(all_classifications) > 1
+        
+        # Primeiro resultado como principal
+        primary_result = all_classifications[0]
 
         self.declare(
             AnalysisResult(
                 classifications=all_classifications,
                 primary_result=primary_result,
-                multiple_types=report_multiple,
-                ambiguity_level=ambiguity_level
+                multiple_types=report_multiple
             )
         )
 
         print("\n✅ Análise consolidada:")
         print(f"- Resultado principal: {primary_result['violence_type']}{' - ' + primary_result['subtype'] if primary_result.get('subtype') else ''}")
-        print(f"- Confiança: {primary_result['confidence']:.2f}")
         print(f"- Reportar múltiplos: {report_multiple}")
-        if report_multiple:
-            print(f"- Nível de ambiguidade: {ambiguity_level:.2f}")
-            print(f"- Todas as classificações: {len(all_classifications)}")
-            for c in all_classifications:
-                print(f"  • {c['violence_type']}{' - ' + c['subtype'] if c.get('subtype') else ''} ({c['confidence']:.2f})")
-
-    # MÉTODOS AUXILIARES
-    
-    def add_score(self, violence_type, subtype, score, explanations=None):
-        """
-        Adiciona pontuação a um tipo/subtipo de violência.
-        """
-        # Garantir que subtype nunca seja None
-        subtype = subtype or ""
-
-        # Gerar chave única para este tipo/subtipo
-        key = f"{violence_type}_{subtype}" if subtype else violence_type
         
-        # Verificar se já existe uma classificação para este tipo/subtipo
-        existing_fact_id = None
-        existing_fact = None
-        for fact_id in self.get_matching_facts(ViolenceClassification):
-            fact = self.facts[fact_id]
-            if fact["violence_type"] == violence_type and fact["subtype"] == subtype:
-                existing_fact_id = fact_id
-                existing_fact = fact
-                break
-        
-        # Armazenar explicações
-        if explanations:
-            if key not in self.explanations:
-                self.explanations[key] = []
-            self.explanations[key].extend(explanations)
-        
-        # Limiar e pontuação máxima para calcular confiança
-        threshold = get_threshold(violence_type, subtype)
-        max_score = get_max_score(violence_type, subtype)
-        
-        if existing_fact_id is not None:
-            # Atualizar classificação existente
-            new_score = existing_fact["score"] + score
-            confidence = calculate_confidence(new_score, threshold, max_score)
-            
-            # Em vez de modificar, criar um novo fato e remover o antigo
-            # Este é um workaround para o problema com modify()
-            try:
-                # Remover o fato antigo do dicionário
-                del self.facts[existing_fact_id]
-                
-                # Declarar um novo fato com valores atualizados
-                self.declare(
-                    ViolenceClassification(
-                        violence_type=violence_type,
-                        subtype=subtype,
-                        score=new_score,
-                        confidence_level=confidence
-                    )
-                )
-            except Exception as e:
-                print(f"⚠️ Erro ao atualizar classificação: {e}")
-                # Se falhar, simplesmente declaramos um novo
-                self.declare(
-                    ViolenceClassification(
-                        violence_type=violence_type,
-                        subtype=subtype,
-                        score=new_score,
-                        confidence_level=confidence
-                    )
-                )
-            
-            print(f"📊 Atualizado {key}: score={new_score}, confiança={confidence:.2f}")
-        else:
-            # Criar nova classificação
-            confidence = calculate_confidence(score, threshold, max_score)
-            self.declare(
-                ViolenceClassification(
-                    violence_type=violence_type,
-                    subtype=subtype,
-                    score=score,
-                    confidence_level=confidence
-                )
-            )
-            print(f"📊 Criado {key}: score={score}, confiança={confidence:.2f}")
-    
     def get_explanation(self, violence_type, subtype=None):
         """
         Recupera explicações armazenadas para um tipo/subtipo.
-        
-        Args:
-            violence_type: Tipo principal de violência
-            subtype: Subtipo (se aplicável)
-            
-        Returns:
-            List: Lista de explicações ou lista vazia se não houver
         """
         key = f"{violence_type}_{subtype}" if subtype else violence_type
         return self.explanations.get(key, [])
@@ -601,12 +577,6 @@ class ViolenceRules(KnowledgeEngine):
     def get_matching_facts(self, fact_type):
         """
         Retorna os IDs dos fatos que correspondem ao tipo especificado.
-        
-        Args:
-            fact_type: O tipo de fato a ser buscado
-            
-        Returns:
-            List: Lista dos IDs de fatos do tipo especificado
         """
         return [fact_id for fact_id, fact in self.facts.items() 
                 if isinstance(fact, fact_type)]
