@@ -1,8 +1,7 @@
-# Guia de Identificação de Tipos de Violencia
-## Sistema Expecialista
+# Guia de Identificação de Tipos de Violencia -- Sistema Expecialista
 
 ## Integrantes 
-[Allan J.](https://github.com/allanjose001) [Ismael D.](https://github.com/ismael-ds-correia)
+[Allan J.](https://github.com/allanjose001) | [Ismael D.](https://github.com/ismael-ds-correia)
 
 ## Sobre
 Projeto sobre um Sistema Expecialista que identifica os tipos de violencias relatados por um usuario atráves de um input de texto.
