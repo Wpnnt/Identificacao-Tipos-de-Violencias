@@ -6,8 +6,10 @@ from knowledge_base.violence_types import VIOLENCE_TYPES
 # Inicializar o sistema especialista
 @st.cache_resource
 def get_expert_system():
-    api_key = st.secrets.get("GROQ_API_KEY", os.environ.get("GROQ_API_KEY", ""))
-    return ExpertSystem(api_key=api_key)
+    if 'expert_system' not in st.session_state:
+        api_key = st.secrets.get("GROQ_API_KEY", os.environ.get("GROQ_API_KEY", ""))
+        st.session_state.expert_system = ExpertSystem(api_key=api_key)
+    return st.session_state.expert_system
 
 st.set_page_config(
     page_title="Sistema Especialista",
@@ -106,7 +108,6 @@ elif st.session_state.state == 'result':
             # Obter informações mais detalhadas do tipo/subtipo
             vtype = r["violence_type"]
             subtype = r.get("subtype")
-            confidence_pct = round(r["confidence"] * 100)
             
             # Determinar o título a ser exibido
             if subtype:
@@ -115,8 +116,8 @@ elif st.session_state.state == 'result':
             else:
                 title = VIOLENCE_TYPES[vtype]['nome'] if 'nome' in VIOLENCE_TYPES[vtype] else vtype.replace('_', ' ').title()
             
-            # Exibir resultado
-            with st.expander(f"{title} - Confiança: {confidence_pct}%"):
+            # Exibir resultado (sem mostrar confiança)
+            with st.expander(f"{title}"):
                 # Exibir descrição
                 if subtype and "subtipos" in VIOLENCE_TYPES[vtype] and subtype in VIOLENCE_TYPES[vtype]["subtipos"]:
                     st.write(VIOLENCE_TYPES[vtype]["subtipos"][subtype]["definicao"])
@@ -138,7 +139,7 @@ elif st.session_state.state == 'result':
     # Opção para reiniciar
     if st.button("Iniciar Nova Análise"):
         # Resetar todos os estados
-        for key in ['state', 'keywords', 'questions', 'missing_fields', 'partial_facts', 'results']:
+        for key in ['state', 'keywords', 'questions', 'missing_fields', 'partial_facts', 'results', 'expert_system']:
             if key in st.session_state:
                 del st.session_state[key]
         st.session_state.state = 'initial'

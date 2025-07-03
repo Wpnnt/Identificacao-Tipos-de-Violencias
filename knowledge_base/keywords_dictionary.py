@@ -247,14 +247,11 @@ CONCEPT_MAPPING = {
         }
     },
     "relacionamento": {
-        "superior_hierarquico": {
+        "relacao_hierarquica": {
             "abuso_psicologico": CRITERION_WEIGHTS["relationship"]["hierarchical"],
             "assedio_moral_genero": CRITERION_WEIGHTS["relationship"]["hierarchical"]
         },
         "colega": {
-            "microagressoes": {"questionar_julgamento": CRITERION_WEIGHTS["relationship"]["peer"]}
-        },
-        "subordinado": {
             "microagressoes": {"questionar_julgamento": CRITERION_WEIGHTS["relationship"]["peer"]}
         },
         "desconhecido": {
@@ -384,35 +381,44 @@ def extract_keywords_from_concept_mapping():
 
 def build_keywords_dictionary():
     """
-    Constrói o dicionário completo de palavras-chave combinando todas as fontes.
+    Constrói o dicionário simplificado de palavras-chave usando apenas as keywords permitidas.
     """
-    # Palavras-chave das definições de tipos de violência
-    vt_keywords = extract_keywords_from_violence_types()
+    keywords = {
+        "action_type": [
+            "interrupcao", "questionamento_capacidade", "comentarios_saude_mental",
+            "piadas_estereotipos", "perseguicao", "exclusao", "ameaca",
+            "constrangimento", "humilhacao", "pressao_tarefas",
+            "natureza_sexual_nao_consentido", "contato_fisico_nao_consentido",
+            "ato_obsceno", "coercao_sexual", "comentarios_sobre_peso",
+            "exclusao_por_peso", "negacao_acessibilidade", "infantilizacao",
+            "cyberbullying", "exposicao_conteudo", "zombaria_religiao",
+            "impedimento_pratica_religiosa", "discriminacao_origem",
+            "piada_sotaque", "insulto", "insulto_racial"
+        ],
+        "frequency": [
+            "unica_vez", "algumas_vezes", "repetidamente", "continuamente"
+        ],
+        "context": [
+            "sala_aula", "ambiente_administrativo", "local_trabalho",
+            "espaco_publico_campus", "ambiente_online", "evento_academico",
+            "ambiente_social", "local_culto_religioso"
+        ],
+        "target": [
+            "genero", "orientacao_sexual", "raca_etnia", "condicao_financeira",
+            "deficiencia", "aparencia_fisica", "origem_regional", 
+            "origem_estrangeira", "desempenho_academico", "religiao"
+        ],
+        "relationship": [
+            "relacao_hierarquica", "colega", "desconhecido", "ex_relacionamento"
+        ],
+        "impact": [
+            "constrangimento", "impacto_participacao", "danos_emocionais",
+            "limitacao_liberdade", "prejuizo_desempenho", "medo_inseguranca",
+            "violacao_privacidade", "limitacao_acesso", "discriminacao_identidade"
+        ]
+    }
     
-    # Palavras-chave do mapeamento de conceitos
-    concept_keywords = extract_keywords_from_concept_mapping()
-    
-    # Combinar todos os dicionários
-    combined = {}
-    for category in set(list(vt_keywords.keys()) + list(concept_keywords.keys())):
-        combined[category] = []
-        if category in vt_keywords:
-            combined[category].extend(vt_keywords[category])
-        if category in concept_keywords:
-            combined[category].extend(concept_keywords[category])
-        
-        # Remover duplicatas e ordenar
-        combined[category] = sorted(list(set(combined[category])))
-    
-    # Ajustes finais
-    if "behavior" in combined:
-        combined["action_type"].extend(combined.pop("behavior"))
-        combined["action_type"] = sorted(list(set(combined["action_type"])))
-    
-    # Expandir com variações comuns
-    combined = expand_keywords_with_variations(combined)
-    
-    return combined
+    return keywords
 
 # Dicionário de perguntas para obter informações faltantes
 FIELDS_QUESTIONS = {
@@ -423,60 +429,6 @@ FIELDS_QUESTIONS = {
     "relationship": "Qual é a sua relação com a pessoa que cometeu essa ação?",
     "impact": "Como isso te afetou? Quais foram os impactos deste comportamento para você?"
 }
-
-def expand_keywords_with_variations(keywords: Dict[str, List[str]]) -> Dict[str, List[str]]:
-    """
-    Versão simplificada que adiciona apenas as variações mais essenciais.
-    """
-    expanded = {category: list(words) for category, words in keywords.items()}
-    
-    # Dicionário SIMPLIFICADO de variações por palavra-chave
-    variations = {
-        # Action type - APENAS variações principais
-        "interrupcao": ["interromper", "cortar fala"],
-        "questionamento_capacidade": ["duvidar", "questionar capacidade"],
-        "perseguicao": ["perseguir", "stalking", "vigiar"],
-        "ameaca": ["ameaçar", "intimidar"],
-        "humilhacao": ["humilhar", "ridicularizar"],
-        "comentarios_saude_mental": ["histérico", "emocional", "louco"],
-        "piadas_estereotipos": ["piada ofensiva", "zoação"],
-        "xingamento": ["xingar", "ofender", "insultar"],
-        "ofensa": ["ofender", "insultar"],
-        "insulto": ["xingar", "ofender"],
-        "coercao_sexual": ["estupro", "forçar"],
-        
-        # Gordofobia - simplificado
-        "comentarios_sobre_peso": ["gordofobia", "gordo", "peso"],
-        
-        # Discriminação racial - adicionado
-        "insulto_racial": ["racismo", "macaco", "racial", "negro"],
-        
-        # Frequency - simplificado
-        "repetidamente": ["várias vezes", "frequentemente"],
-        "continuamente": ["sempre", "constantemente"],
-        
-        # Target - simplificado
-        "raca_etnia": ["negro", "preto", "cor da pele", "raça"],
-        "genero": ["mulher", "homem", "feminino"],
-        
-        # Context - simplificado
-        "espaco_publico_campus": ["campus", "rua", "público"],
-        
-        # Impact - simplificado
-        "medo_inseguranca": ["medo", "insegurança"]
-    }
-    
-    # Aplicar apenas as variações principais
-    for category, words in expanded.items():
-        new_words = []
-        for word in words:
-            if word in variations:
-                new_words.extend(variations[word])
-        expanded[category].extend(new_words)
-        # Remover duplicatas e ordenar
-        expanded[category] = sorted(list(set(expanded[category])))
-    
-    return expanded
 
 # Construir e exportar o dicionário de palavras-chave
 KEYWORDS_DICT = build_keywords_dictionary()

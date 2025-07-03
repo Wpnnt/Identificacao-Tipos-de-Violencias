@@ -95,7 +95,7 @@ class TextProcessor:
         """
         print(f"\n🔍 Processando texto para criar fatos: {text[:100]}{'...' if len(text) > 100 else ''}")
         
-        # Adicionar o TextRelato original
+        # Lista para armazenar os fatos que serão retornados
         facts = [TextRelato(text=text, processed=True)]
         
         try:
@@ -109,29 +109,46 @@ class TextProcessor:
                 # Converter resposta em fatos Experta
                 keywords = response["identified_keywords"]
                 
-                # Criar fatos KeywordFact
                 for category, values in keywords.items():
                     for keyword in values:
-                        facts.append(KeywordFact(category=category, keyword=keyword))
+                        # Criar fato KeywordFact
+                        kw_fact = KeywordFact(category=category, keyword=keyword)
+                        facts.append(kw_fact)
+                        print(f"📌 Criado fato Experta: KeywordFact(category='{category}', keyword='{keyword}')")
                         
                         # Criar fatos específicos correspondentes
                         if category == "action_type":
-                            facts.append(ViolenceBehavior(behavior_type=keyword))
+                            behavior_fact = ViolenceBehavior(behavior_type=keyword)
+                            facts.append(behavior_fact)
+                            print(f"📌 Criado fato Experta: ViolenceBehavior(behavior_type='{keyword}')")
+                        
                         elif category == "context":
-                            facts.append(ContextFact(location=keyword))
+                            context_fact = ContextFact(location=keyword)
+                            facts.append(context_fact)
+                            print(f"📌 Criado fato Experta: ContextFact(location='{keyword}')")
+                        
                         elif category == "frequency":
-                            facts.append(FrequencyFact(value=keyword))
+                            freq_fact = FrequencyFact(value=keyword)
+                            facts.append(freq_fact)
+                            print(f"📌 Criado fato Experta: FrequencyFact(value='{keyword}')")
+                        
                         elif category == "target":
-                            facts.append(TargetFact(characteristic=keyword))
+                            target_fact = TargetFact(characteristic=keyword)
+                            facts.append(target_fact)
+                            print(f"📌 Criado fato Experta: TargetFact(characteristic='{keyword}')")
+                        
                         elif category == "relationship":
-                            facts.append(RelationshipFact(type=keyword))
+                            rel_fact = RelationshipFact(type=keyword)
+                            facts.append(rel_fact)
+                            print(f"📌 Criado fato Experta: RelationshipFact(type='{keyword}')")
+                        
                         elif category == "impact":
-                            facts.append(ImpactFact(type=keyword))
-                
-                for fact in facts:
-                    print(f"📌 Criado fato Experta: {fact}")
+                            impact_fact = ImpactFact(type=keyword)
+                            facts.append(impact_fact)
+                            print(f"📌 Criado fato Experta: ImpactFact(type='{keyword}')")
             else:
                 print("⚠️ Nenhuma palavra-chave identificada no texto")
+        
         except Exception as e:
             print(f"❌ Erro ao processar texto: {str(e)}")
         

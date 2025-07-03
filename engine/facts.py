@@ -44,6 +44,10 @@ class AnalysisResult(Fact):
     primary_result = Field(dict, default=None)  # Resultado principal
     multiple_types = Field(bool, default=False) # Indica se foram encontrados múltiplos tipos\
 
+class ProcessingPhase(Fact):
+    """Controla a fase de processamento do motor de inferência."""
+    phase = Field(str, mandatory=True)  # 'collection', 'analysis'
+
 def create_facts_from_groq_response(response):
     facts = []
     if "identified_keywords" in response and response["identified_keywords"]:

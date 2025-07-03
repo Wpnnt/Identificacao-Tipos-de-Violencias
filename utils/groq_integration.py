@@ -40,9 +40,7 @@ class GroqAPI:
         3. Identifique APENAS palavras ou conceitos que estejam explicitamente mencionados no relato
         4. Se necessário, sugira perguntas específicas para obter informações faltantes
         5. NÃO PERGUNTE sobre informações que o usuário já forneceu ou disse explicitamente não saber
-        6. Se o usuário indicar desconhecimento sobre algum aspecto (como "não vi quem era", "não sei quem fez", "não sei o nome da pessoa"), 
-            NÃO formule perguntas tentando identificar essa informação
-        7. NÃO modifique nem parafraseie as palavras-chave - use-as exatamente como estão na lista
+        6. NÃO modifique nem parafraseie as palavras-chave - use-as exatamente como estão na lista
         LISTA DE PALAVRAS-CHAVE POR CATEGORIA:
         """
         
@@ -137,18 +135,11 @@ class GroqAPI:
                     
                 valid_keywords = []
                 for kw in keywords:
-                    # Primeiro verificar correspondência exata
+                    # Verificar correspondência exata
                     if kw in self.keyword_dict[category]:
                         valid_keywords.append(kw)
-                    else:
-                        # Tentar correspondência case-insensitive
-                        kw_lower = kw.lower()
-                        for valid_kw in self.keyword_dict[category]:
-                            if valid_kw.lower() == kw_lower:
-                                valid_keywords.append(valid_kw)  # Usar a versão correta do catálogo
-                                break
                 
                 if valid_keywords:  # Só adicionar se houver palavras-chave válidas
                     valid_response["identified_keywords"][category] = valid_keywords
-                
+        
         return valid_response

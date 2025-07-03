@@ -5,36 +5,50 @@ from experta.deffacts import DefFacts
 from experta import TEST, AS, OR, NOT, AND
 from typing import Dict, List, Any, Optional
 
-# Importações dos fatos necessários para o motor de regras
 from .facts import (
     TextRelato, KeywordFact, ViolenceBehavior, ContextFact, FrequencyFact,
     TargetFact, RelationshipFact, ImpactFact, ViolenceClassification,
-    AnalysisResult
+    AnalysisResult, ProcessingPhase
 )
+
 from knowledge_base.violence_types import VIOLENCE_TYPES
 
 class ViolenceRules(KnowledgeEngine):
     """
     Motor de regras para identificação de tipos de violência.
     """
-    
+
     def __init__(self):
-        """Inicializa o motor de regras."""
         super().__init__()
-        self.explanations = {}  # Armazena explicações para cada classificação
-    
+        self.explanations = {}
+
     @DefFacts()
     def initial_facts(self):
+        """Define os fatos iniciais, incluindo a fase inicial de coleta."""
         yield Fact(engine_ready=True)
-    
+        yield ProcessingPhase(phase="collection")  # Fase inicial: coleta de fatos
+
+    @Rule(ProcessingPhase(phase="collection"))
+    def start_analysis_phase(self):
+        """
+        Transição da fase de coleta para a fase de análise.
+        Esta regra dispara após todos os fatos serem declarados.
+        """
+        print("🔄 Transitando para fase de análise...")
+        # Remover a fase de coleta
+        for fact_id in self.get_matching_facts(ProcessingPhase):
+            self.retract(fact_id)
+        # Declarar a fase de análise
+        self.declare(ProcessingPhase(phase="analysis"))
+
     @Rule(Fact(engine_ready=True))
     def rule_diagnostic(self):
-        """Regra de diagnóstico para verificar o funcionamento do motor."""
         print("✅ DIAGNÓSTICO: Motor de regras funcionando!")
-        
-    # REGRAS PARA MICROAGRESSÕES
-    
+
+    # MICROAGRESSÕES
+
     @Rule(
+        ProcessingPhase(phase="analysis"),
         OR(
             ViolenceBehavior(behavior_type="interrupcao"),
             KeywordFact(category="action_type", keyword="interrupcao")
@@ -47,13 +61,13 @@ class ViolenceRules(KnowledgeEngine):
         )
     )
     def detect_interrupcoes_constantes(self):
-        """Detecta microagressões do tipo interrupções constantes."""
         self.create_classification("microagressoes", "interrupcoes_constantes", [
             "Identificado comportamento de interrupção",
             "Ocorre repetidamente ou continuamente"
         ])
-    
+
     @Rule(
+        ProcessingPhase(phase="analysis"),
         OR(
             ViolenceBehavior(behavior_type="questionamento_capacidade"),
             KeywordFact(category="action_type", keyword="questionamento_capacidade")
@@ -64,75 +78,70 @@ class ViolenceRules(KnowledgeEngine):
         )
     )
     def detect_questionar_julgamento(self):
-        """Detecta microagressões do tipo questionamento de capacidade."""
         self.create_classification("microagressoes", "questionar_julgamento", [
             "Identificado comportamento de questionar capacidade",
             "Direcionado a características de gênero"
         ])
-    
+
     @Rule(
+        ProcessingPhase(phase="analysis"),
         OR(
             ViolenceBehavior(behavior_type="comentarios_saude_mental"),
             KeywordFact(category="action_type", keyword="comentarios_saude_mental")
         )
     )
     def detect_comentarios_saude_mental(self):
-        """Detecta microagressões relacionadas a comentários sobre saúde mental."""
         self.create_classification("microagressoes", "comentarios_saude_mental", [
             "Identificados comentários relacionados à saúde mental"
         ])
-    
+
     @Rule(
+        ProcessingPhase(phase="analysis"),
         OR(
             ViolenceBehavior(behavior_type="piadas_estereotipos"),
             KeywordFact(category="action_type", keyword="piadas_estereotipos")
         )
     )
     def detect_estereotipos(self):
-        """Detecta microagressões baseadas em estereótipos."""
         self.create_classification("microagressoes", "estereotipos", [
             "Identificadas piadas ou comentários baseados em estereótipos"
         ])
-    
-    # REGRAS PARA PERSEGUIÇÃO
-    
+
+    # PERSEGUIÇÃO
+
     @Rule(
+        ProcessingPhase(phase="analysis"),
         OR(
             ViolenceBehavior(behavior_type="perseguicao"),
-            ViolenceBehavior(behavior_type="vigilancia"),
-            KeywordFact(category="action_type", keyword="perseguicao"),
-            KeywordFact(category="action_type", keyword="vigilancia"),
-            KeywordFact(category="action_type", keyword="stalking")
+            KeywordFact(category="action_type", keyword="perseguicao")
         )
     )
     def detect_perseguicao(self):
-        """Detecta comportamento de perseguição."""
         self.create_classification("perseguicao", None, [
-            "Identificado comportamento de perseguição ou vigilância constante"
+            "Identificado comportamento de perseguição"
         ])
-    
+
     @Rule(
+        ProcessingPhase(phase="analysis"),
         OR(
             ViolenceBehavior(behavior_type="perseguicao"),
             KeywordFact(category="action_type", keyword="perseguicao")
         ),
         OR(
             ImpactFact(type="medo_inseguranca"),
-            KeywordFact(category="impact", keyword="medo_inseguranca"),
-            KeywordFact(category="impact", keyword="medo"),
-            KeywordFact(category="impact", keyword="inseguranca")
+            KeywordFact(category="impact", keyword="medo_inseguranca")
         )
     )
     def detect_perseguicao_com_medo(self):
-        """Detecta perseguição que causa medo/insegurança."""
         self.create_classification("perseguicao", None, [
             "Identificado comportamento de perseguição",
             "Causa medo ou insegurança na vítima"
         ])
-    
-    # REGRAS PARA DISCRIMINAÇÃO DE GÊNERO
-    
+
+    # DISCRIMINAÇÃO DE GÊNERO
+
     @Rule(
+        ProcessingPhase(phase="analysis"),
         OR(
             ViolenceBehavior(behavior_type="exclusao"),
             KeywordFact(category="action_type", keyword="exclusao")
@@ -145,13 +154,13 @@ class ViolenceRules(KnowledgeEngine):
         )
     )
     def detect_discriminacao_flagrante(self):
-        """Detecta discriminação flagrante baseada em gênero."""
         self.create_classification("discriminacao_genero", "discriminacao_flagrante", [
             "Identificado comportamento de exclusão",
             "Direcionado a características de gênero ou orientação sexual"
         ])
-    
+
     @Rule(
+        ProcessingPhase(phase="analysis"),
         OR(
             ViolenceBehavior(behavior_type="questionamento_capacidade"),
             KeywordFact(category="action_type", keyword="questionamento_capacidade")
@@ -168,16 +177,16 @@ class ViolenceRules(KnowledgeEngine):
         )
     )
     def detect_discriminacao_sutil(self):
-        """Detecta discriminação sutil baseada em gênero."""
         self.create_classification("discriminacao_genero", "discriminacao_sutil", [
             "Identificado comportamento de questionamento de capacidade",
             "Direcionado a características de gênero",
             "Ocorre repetidamente ou continuamente"
         ])
-    
-    # REGRAS PARA ABUSO PSICOLÓGICO
-    
+
+    # ABUSO PSICOLÓGICO
+
     @Rule(
+        ProcessingPhase(phase="analysis"),
         OR(
             ViolenceBehavior(behavior_type="ameaca"),
             ViolenceBehavior(behavior_type="humilhacao"),
@@ -188,12 +197,12 @@ class ViolenceRules(KnowledgeEngine):
         )
     )
     def detect_abuso_psicologico(self):
-        """Detecta abuso psicológico."""
         self.create_classification("abuso_psicologico", None, [
             "Identificado comportamento de ameaça, humilhação ou constrangimento"
         ])
-    
+
     @Rule(
+        ProcessingPhase(phase="analysis"),
         OR(
             ViolenceBehavior(behavior_type="ameaca"),
             ViolenceBehavior(behavior_type="humilhacao"),
@@ -201,20 +210,19 @@ class ViolenceRules(KnowledgeEngine):
             KeywordFact(category="action_type", keyword="humilhacao")
         ),
         OR(
-            RelationshipFact(type="superior_hierarquico"),
-            KeywordFact(category="relationship", keyword="superior_hierarquico")
+            RelationshipFact(type="relacao_hierarquica"),
         )
     )
     def detect_abuso_psicologico_hierarquico(self):
-        """Detecta abuso psicológico com relação hierárquica."""
         self.create_classification("abuso_psicologico", None, [
             "Identificado comportamento de ameaça ou humilhação",
             "Praticado por superior hierárquico"
         ])
-    
-    # REGRAS PARA ASSÉDIO MORAL DE GÊNERO
-    
+
+    # ASSÉDIO MORAL DE GÊNERO
+
     @Rule(
+        ProcessingPhase(phase="analysis"),
         OR(
             ViolenceBehavior(behavior_type="pressao_tarefas"),
             KeywordFact(category="action_type", keyword="pressao_tarefas")
@@ -229,28 +237,28 @@ class ViolenceRules(KnowledgeEngine):
         )
     )
     def detect_assedio_moral_genero(self):
-        """Detecta assédio moral baseado em gênero."""
         self.create_classification("assedio_moral_genero", None, [
             "Identificado comportamento de pressão excessiva com tarefas",
             "Direcionado a características de gênero",
             "Ocorre em local de trabalho"
         ])
-    
-    # REGRAS PARA VIOLÊNCIA SEXUAL
-    
+
+    # VIOLÊNCIA SEXUAL
+
     @Rule(
+        ProcessingPhase(phase="analysis"),
         OR(
             ViolenceBehavior(behavior_type="natureza_sexual_nao_consentido"),
             KeywordFact(category="action_type", keyword="natureza_sexual_nao_consentido")
         )
     )
     def detect_assedio_sexual(self):
-        """Detecta assédio sexual."""
         self.create_classification("violencia_sexual", "assedio_sexual", [
             "Identificado comportamento de natureza sexual não consentido"
         ])
-    
+
     @Rule(
+        ProcessingPhase(phase="analysis"),
         OR(
             ViolenceBehavior(behavior_type="contato_fisico_nao_consentido"),
             ViolenceBehavior(behavior_type="ato_obsceno"),
@@ -259,28 +267,26 @@ class ViolenceRules(KnowledgeEngine):
         )
     )
     def detect_importunacao_sexual(self):
-        """Detecta importunação sexual."""
         self.create_classification("violencia_sexual", "importunacao_sexual", [
             "Identificado contato físico não consentido ou ato obsceno"
         ])
-    
+
     @Rule(
+        ProcessingPhase(phase="analysis"),
         OR(
             ViolenceBehavior(behavior_type="coercao_sexual"),
-            KeywordFact(category="action_type", keyword="coercao_sexual"),
-            KeywordFact(category="action_type", keyword="estupro"),
-            KeywordFact(category="action_type", keyword="abuso")
+            KeywordFact(category="action_type", keyword="coercao_sexual")
         )
     )
     def detect_estupro(self):
-        """Detecta estupro."""
         self.create_classification("violencia_sexual", "estupro", [
             "Identificado comportamento de coerção sexual ou relação não consentida"
         ])
-    
-    # REGRAS PARA GORDOFOBIA
-    
+
+    # GORDOFOBIA
+
     @Rule(
+        ProcessingPhase(phase="analysis"),
         OR(
             ViolenceBehavior(behavior_type="comentarios_sobre_peso"),
             ViolenceBehavior(behavior_type="piadas_sobre_peso"),
@@ -289,38 +295,38 @@ class ViolenceRules(KnowledgeEngine):
         )
     )
     def detect_gordofobia_direta(self):
-        """Detecta discriminação direta por gordofobia."""
         self.create_classification("gordofobia", "discriminacao_direta", [
             "Identificados comentários ou piadas sobre peso/corpo"
         ])
-    
+
     @Rule(
+        ProcessingPhase(phase="analysis"),
         OR(
             ViolenceBehavior(behavior_type="exclusao_por_peso"),
             KeywordFact(category="action_type", keyword="exclusao_por_peso")
         )
     )
     def detect_gordofobia_estrutural(self):
-        """Detecta discriminação estrutural por gordofobia."""
         self.create_classification("gordofobia", "discriminacao_estrutural", [
             "Identificada exclusão baseada em peso/aparência física"
         ])
-    
-    # REGRAS PARA CAPACITISMO
-    
+
+    # CAPACITISMO
+
     @Rule(
+        ProcessingPhase(phase="analysis"),
         OR(
             ViolenceBehavior(behavior_type="negacao_acessibilidade"),
             KeywordFact(category="action_type", keyword="negacao_acessibilidade")
         )
     )
     def detect_barreiras_fisicas(self):
-        """Detecta barreiras físicas de acessibilidade."""
         self.create_classification("capacitismo", "barreiras_fisicas", [
             "Identificada negação de acessibilidade ou barreiras físicas"
         ])
-    
+
     @Rule(
+        ProcessingPhase(phase="analysis"),
         OR(
             ViolenceBehavior(behavior_type="infantilizacao"),
             KeywordFact(category="action_type", keyword="infantilizacao")
@@ -331,43 +337,41 @@ class ViolenceRules(KnowledgeEngine):
         )
     )
     def detect_barreiras_atitudinais(self):
-        """Detecta barreiras atitudinais de acessibilidade."""
         self.create_classification("capacitismo", "barreiras_atitudinais", [
             "Identificado comportamento de infantilização",
             "Direcionado a pessoa com deficiência"
         ])
-    
-    # REGRAS PARA VIOLÊNCIA DIGITAL
-    
+
+    # VIOLÊNCIA DIGITAL
+
     @Rule(
+        ProcessingPhase(phase="analysis"),
         OR(
             ViolenceBehavior(behavior_type="cyberbullying"),
-            ViolenceBehavior(behavior_type="mensagens_ofensivas"),
-            KeywordFact(category="action_type", keyword="cyberbullying"),
-            KeywordFact(category="action_type", keyword="mensagens_ofensivas")
+            KeywordFact(category="action_type", keyword="cyberbullying")
         )
     )
     def detect_cyberbullying(self):
-        """Detecta cyberbullying."""
         self.create_classification("violencia_digital", "cyberbullying", [
-            "Identificado comportamento de cyberbullying ou mensagens ofensivas"
+            "Identificado comportamento de cyberbullying"
         ])
-    
+
     @Rule(
+        ProcessingPhase(phase="analysis"),
         OR(
             ViolenceBehavior(behavior_type="exposicao_conteudo"),
             KeywordFact(category="action_type", keyword="exposicao_conteudo")
         )
     )
     def detect_exposicao_nao_consentida(self):
-        """Detecta exposição não consentida."""
         self.create_classification("violencia_digital", "exposicao_nao_consentida", [
             "Identificada exposição não consentida de conteúdo pessoal"
         ])
-    
-    # REGRAS PARA DISCRIMINAÇÃO RELIGIOSA
-    
+
+    # DISCRIMINAÇÃO RELIGIOSA
+
     @Rule(
+        ProcessingPhase(phase="analysis"),
         OR(
             ViolenceBehavior(behavior_type="zombaria_religiao"),
             KeywordFact(category="action_type", keyword="zombaria_religiao")
@@ -378,27 +382,27 @@ class ViolenceRules(KnowledgeEngine):
         )
     )
     def detect_ofensa_religiosa_direta(self):
-        """Detecta ofensa religiosa direta."""
         self.create_classification("discriminacao_religiosa", "ofensa_direta", [
             "Identificada zombaria ou piadas sobre religião",
             "Direcionada a características religiosas da vítima"
         ])
-    
+
     @Rule(
+        ProcessingPhase(phase="analysis"),
         OR(
             ViolenceBehavior(behavior_type="impedimento_pratica_religiosa"),
             KeywordFact(category="action_type", keyword="impedimento_pratica_religiosa")
         )
     )
     def detect_discriminacao_religiosa_institucional(self):
-        """Detecta discriminação religiosa institucional."""
         self.create_classification("discriminacao_religiosa", "discriminacao_institucional", [
             "Identificado impedimento de práticas religiosas"
         ])
-    
-    # REGRAS PARA XENOFOBIA
-    
+
+    # XENOFOBIA
+
     @Rule(
+        ProcessingPhase(phase="analysis"),
         OR(
             ViolenceBehavior(behavior_type="piada_sotaque"),
             KeywordFact(category="action_type", keyword="piada_sotaque")
@@ -409,13 +413,13 @@ class ViolenceRules(KnowledgeEngine):
         )
     )
     def detect_discriminacao_regional(self):
-        """Detecta discriminação regional."""
         self.create_classification("xenofobia", "discriminacao_regional", [
             "Identificadas piadas ou comentários sobre sotaque",
             "Direcionados à origem regional da vítima"
         ])
-    
+
     @Rule(
+        ProcessingPhase(phase="analysis"),
         OR(
             ViolenceBehavior(behavior_type="discriminacao_origem"),
             KeywordFact(category="action_type", keyword="discriminacao_origem")
@@ -426,22 +430,20 @@ class ViolenceRules(KnowledgeEngine):
         )
     )
     def detect_xenofobia_internacional(self):
-        """Detecta xenofobia internacional."""
         self.create_classification("xenofobia", "xenofobia_internacional", [
             "Identificada discriminação baseada em origem",
             "Direcionada à origem estrangeira da vítima"
         ])
 
-    # REGRAS PARA DISCRIMINAÇÃO RACIAL
+    # DISCRIMINAÇÃO RACIAL
 
     @Rule(
+        ProcessingPhase(phase="analysis"),
         OR(
             ViolenceBehavior(behavior_type="insulto"),
             ViolenceBehavior(behavior_type="piadas_estereotipos"),
-            ViolenceBehavior(behavior_type="xingamento"),  # Adicionado xingamento
             KeywordFact(category="action_type", keyword="insulto"),
-            KeywordFact(category="action_type", keyword="piadas_estereotipos"),
-            KeywordFact(category="action_type", keyword="xingamento")  # Adicionado xingamento
+            KeywordFact(category="action_type", keyword="piadas_estereotipos")
         ),
         OR(
             TargetFact(characteristic="raca_etnia"),
@@ -449,37 +451,62 @@ class ViolenceRules(KnowledgeEngine):
         )
     )
     def detect_discriminacao_racial_direta(self):
-        """Detecta discriminação racial direta."""
         self.create_classification("discriminacao_racial", "ofensa_direta", [
             "Identificado insulto ou comentário pejorativo",
             "Direcionado à raça/etnia da vítima"
         ])
 
-
     @Rule(
+        ProcessingPhase(phase="analysis"),
         OR(
-            ViolenceBehavior(behavior_type="ofensa"),
-            KeywordFact(category="action_type", keyword="ofensa"),
-            KeywordFact(category="action_type", keyword="insulto_racial"),
-            KeywordFact(category="action_type", keyword="ofensa")
+            KeywordFact(category="action_type", keyword="insulto_racial")
         ),
         OR(
             TargetFact(characteristic="raca_etnia"),
-            KeywordFact(category="target", keyword="raca_etnia"),
-            TargetFact(characteristic="negro"),
-            KeywordFact(category="target", keyword="negro"),
-            TargetFact(characteristic="cor da pele"),
-            KeywordFact(category="target", keyword="cor da pele")
+            KeywordFact(category="target", keyword="raca_etnia")
         )
     )
     def detect_discriminacao_racial_ofensa(self):
-        """Detecta discriminação racial por ofensa direta."""
         self.create_classification("discriminacao_racial", "ofensa_direta", [
             "Identificada ofensa verbal de natureza racial",
-            "Direcionada à raça/etnia/cor da vítima"
+            "Direcionada à raça/etnia da vítima"
         ])
-        
-    # Método simplificado para criar classificações
+
+    @Rule(
+        ProcessingPhase(phase="analysis"),
+        KeywordFact(category="action_type", keyword="insulto_racial"),
+        TargetFact(characteristic="raca_etnia")
+    )
+    def detect_discriminacao_racial_direta_insulto(self):
+        self.create_classification("discriminacao_racial", "ofensa_direta", [
+            "Identificada ofensa verbal explícita de natureza racial",
+            "Direcionada especificamente à raça/etnia da vítima"
+        ])
+
+    @Rule(
+        ProcessingPhase(phase="analysis"),
+        ViolenceBehavior(behavior_type="insulto_racial"),
+        OR(
+            TargetFact(characteristic="raca_etnia"),
+            KeywordFact(category="target", keyword="raca_etnia")
+        )
+    )
+    def detect_discriminacao_racial_comportamento(self):
+        self.create_classification("discriminacao_racial", "ofensa_direta", [
+            "Identificado comportamento de insulto racial",
+            "Direcionado à raça/etnia da vítima"
+        ])
+
+    @Rule(
+        ProcessingPhase(phase="analysis"),
+        KeywordFact(category="action_type", keyword="insulto_racial")
+    )
+    def detect_insulto_racial_simples(self):
+        self.create_classification("discriminacao_racial", "ofensa_direta", [
+            "Identificada menção a insulto racial"
+        ])
+
+    # Método para criar classificações
     def create_classification(self, violence_type, subtype=None, explanations=None):
         """
         Cria uma classificação de violência.
@@ -499,30 +526,48 @@ class ViolenceRules(KnowledgeEngine):
                 # Já existe, não precisamos criar outra
                 return
         
-        # Armazenar explicações
+        # Armazenar explicações, evitando duplicações
         key = f"{violence_type}_{subtype}" if subtype else violence_type
         if explanations:
             if key not in self.explanations:
                 self.explanations[key] = []
-            self.explanations[key].extend(explanations)
+            
+            # Adicionar apenas explicações que ainda não existem
+            for explanation in explanations:
+                if explanation not in self.explanations[key]:
+                    self.explanations[key].append(explanation)
         
-        # Criar nova classificação (sem score ou confidence)
+        # Criar nova classificação
         self.declare(
             ViolenceClassification(
                 violence_type=violence_type,
                 subtype=subtype,
-                explanation=explanations or []
+                explanation=self.explanations.get(key, []).copy()  # Usar a lista completa e atual
             )
         )
         print(f"📊 Criado {key}")
     
     def run(self, steps=None):
         """
-        Executa o motor e consolida os resultados automaticamente.
+        Executa o motor em modo controlado por fases.
         """
+        print("🚀 Iniciando motor de inferência com controle de fases")
         steps_value = -1 if steps is None else steps
-        super().run(steps_value)
-        print("\n🔄 Consolidando resultados automaticamente...")
+        
+        # Limitar o número máximo de iterações para evitar loops infinitos
+        max_iterations = 100
+        iteration = 0
+        
+        # Executar até que não haja mais regras para disparar ou atingir limite
+        while self.agenda and iteration < max_iterations:
+            super().run(1)  # Executar apenas uma regra por vez
+            iteration += 1
+            
+            # Sair se não houver mais regras para acionar
+            if not self.agenda:
+                break
+        
+        print("\n🔄 Consolidando resultados...")
         self.consolidate_results()
 
     def consolidate_results(self):
@@ -580,3 +625,22 @@ class ViolenceRules(KnowledgeEngine):
         """
         return [fact_id for fact_id, fact in self.facts.items() 
                 if isinstance(fact, fact_type)]
+    
+    def debug_facts(self):
+        """
+        Exibe os fatos presentes para diagnóstico.
+        """
+        print("\n=== DEBUG: Fatos presentes no motor ===")
+        for fact_id, fact in self.facts.items():
+            print(f"- {fact_id}: {fact}")
+
+    def reset(self):
+        """
+        Reinicia completamente o motor, limpando todos os fatos e explicações.
+        """
+        # Limpar explicações
+        self.explanations = {}
+        
+        # Chamar o reset original
+        super().reset()
+        print("🔄 Motor de regras reiniciado completamente")
