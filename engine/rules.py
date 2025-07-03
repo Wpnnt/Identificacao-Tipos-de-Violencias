@@ -1,3 +1,4 @@
+import inspect  # Adicionar esta importação
 from experta.engine import KnowledgeEngine
 from experta import Fact
 from experta.rule import Rule
@@ -61,10 +62,39 @@ class ViolenceRules(KnowledgeEngine):
         )
     )
     def detect_interrupcoes_constantes(self):
-        self.create_classification("microagressoes", "interrupcoes_constantes", [
-            "Identificado comportamento de interrupção",
-            "Ocorre repetidamente ou continuamente"
-        ])
+        # Coletar os fatos que dispararam esta regra
+        facts_used = {}
+        
+        # Verificar comportamentos identificados
+        behaviors = []
+        for fact_id in self.get_matching_facts(ViolenceBehavior):
+            behavior = self.facts[fact_id]["behavior_type"]
+            if behavior == "interrupcao":
+                behaviors.append(behavior)
+        
+        if behaviors:
+            facts_used["behavior"] = behaviors
+            
+        # Verificar frequências identificadas
+        frequencies = []
+        for fact_id in self.get_matching_facts(FrequencyFact):
+            freq = self.facts[fact_id]["value"]
+            if freq in ["repetidamente", "continuamente"]:
+                frequencies.append(freq)
+        
+        if frequencies:
+            facts_used["frequency"] = frequencies
+            
+        # Raciocínio específico para esta regra
+        reasoning = "A interrupção sistemática e repetida de falas é uma forma sutil mas danosa de microagressão, que pode silenciar vozes e diminuir a participação de determinados grupos em ambientes acadêmicos ou profissionais."
+        
+        # Criar classificação com explicações detalhadas
+        self.create_classification(
+            "microagressoes", 
+            "interrupcoes_constantes", 
+            facts_used=facts_used,
+            reasoning=reasoning
+        )
 
     @Rule(
         ProcessingPhase(phase="analysis"),
@@ -78,10 +108,36 @@ class ViolenceRules(KnowledgeEngine):
         )
     )
     def detect_questionar_julgamento(self):
-        self.create_classification("microagressoes", "questionar_julgamento", [
-            "Identificado comportamento de questionar capacidade",
-            "Direcionado a características de gênero"
-        ])
+        facts_used = {}
+        
+        # Verificar comportamentos identificados
+        behaviors = []
+        for fact_id in self.get_matching_facts(ViolenceBehavior):
+            behavior = self.facts[fact_id]["behavior_type"]
+            if behavior == "questionamento_capacidade":
+                behaviors.append(behavior)
+        
+        if behaviors:
+            facts_used["behavior"] = behaviors
+            
+        # Verificar características do alvo
+        targets = []
+        for fact_id in self.get_matching_facts(TargetFact):
+            target = self.facts[fact_id]["characteristic"]
+            if target == "genero":
+                targets.append(target)
+        
+        if targets:
+            facts_used["target"] = targets
+            
+        reasoning = "O questionamento recorrente da capacidade baseado em gênero é uma forma de discriminação que afeta a confiança da vítima e reforça estereótipos prejudiciais no ambiente acadêmico ou profissional."
+        
+        self.create_classification(
+            "microagressoes", 
+            "questionar_julgamento", 
+            facts_used=facts_used,
+            reasoning=reasoning
+        )
 
     @Rule(
         ProcessingPhase(phase="analysis"),
@@ -117,9 +173,26 @@ class ViolenceRules(KnowledgeEngine):
         )
     )
     def detect_perseguicao(self):
-        self.create_classification("perseguicao", None, [
-            "Identificado comportamento de perseguição"
-        ])
+        facts_used = {}
+        
+        # Verificar comportamentos identificados
+        behaviors = []
+        for fact_id in self.get_matching_facts(ViolenceBehavior):
+            behavior = self.facts[fact_id]["behavior_type"]
+            if behavior == "perseguicao":
+                behaviors.append(behavior)
+        
+        if behaviors:
+            facts_used["behavior"] = behaviors
+        
+        reasoning = "A perseguição é uma forma de violência que viola a privacidade e gera insegurança para a vítima, podendo evoluir para formas mais graves de violência se não for contida a tempo."
+        
+        self.create_classification(
+            "perseguicao", 
+            None, 
+            facts_used=facts_used,
+            reasoning=reasoning
+        )
 
     @Rule(
         ProcessingPhase(phase="analysis"),
@@ -133,10 +206,36 @@ class ViolenceRules(KnowledgeEngine):
         )
     )
     def detect_perseguicao_com_medo(self):
-        self.create_classification("perseguicao", None, [
-            "Identificado comportamento de perseguição",
-            "Causa medo ou insegurança na vítima"
-        ])
+        facts_used = {}
+        
+        # Verificar comportamentos identificados
+        behaviors = []
+        for fact_id in self.get_matching_facts(ViolenceBehavior):
+            behavior = self.facts[fact_id]["behavior_type"]
+            if behavior == "perseguicao":
+                behaviors.append(behavior)
+        
+        if behaviors:
+            facts_used["behavior"] = behaviors
+        
+        # Verificar impactos identificados
+        impacts = []
+        for fact_id in self.get_matching_facts(ImpactFact):
+            impact = self.facts[fact_id]["type"]
+            if impact == "medo_inseguranca":
+                impacts.append(impact)
+        
+        if impacts:
+            facts_used["impact"] = impacts
+            
+        reasoning = "A perseguição que causa medo e insegurança configura uma violação grave da liberdade e bem-estar psicológico da vítima, constituindo situação de alto risco que pode requerer intervenção policial."
+        
+        self.create_classification(
+            "perseguicao", 
+            None, 
+            facts_used=facts_used,
+            reasoning=reasoning
+        )
 
     # DISCRIMINAÇÃO DE GÊNERO
 
@@ -214,10 +313,36 @@ class ViolenceRules(KnowledgeEngine):
         )
     )
     def detect_abuso_psicologico_hierarquico(self):
-        self.create_classification("abuso_psicologico", None, [
-            "Identificado comportamento de ameaça ou humilhação",
-            "Praticado por superior hierárquico"
-        ])
+        facts_used = {}
+        
+        # Verificar comportamentos identificados
+        behaviors = []
+        for fact_id in self.get_matching_facts(ViolenceBehavior):
+            behavior = self.facts[fact_id]["behavior_type"]
+            if behavior in ["ameaca", "humilhacao"]:
+                behaviors.append(behavior)
+        
+        if behaviors:
+            facts_used["behavior"] = behaviors
+            
+        # Verificar relacionamentos identificados
+        relationships = []
+        for fact_id in self.get_matching_facts(RelationshipFact):
+            rel = self.facts[fact_id]["type"]
+            if rel == "relacao_hierarquica":
+                relationships.append(rel)
+        
+        if relationships:
+            facts_used["relationship"] = relationships
+            
+        reasoning = "O abuso psicológico em relações hierárquicas é particularmente grave, pois envolve desequilíbrio de poder que dificulta a defesa da vítima e pode comprometer sua situação acadêmica ou profissional."
+        
+        self.create_classification(
+            "abuso_psicologico", 
+            None, 
+            facts_used=facts_used,
+            reasoning=reasoning
+        )
 
     # ASSÉDIO MORAL DE GÊNERO
 
@@ -237,11 +362,46 @@ class ViolenceRules(KnowledgeEngine):
         )
     )
     def detect_assedio_moral_genero(self):
-        self.create_classification("assedio_moral_genero", None, [
-            "Identificado comportamento de pressão excessiva com tarefas",
-            "Direcionado a características de gênero",
-            "Ocorre em local de trabalho"
-        ])
+        facts_used = {}
+        
+        # Verificar comportamentos identificados
+        behaviors = []
+        for fact_id in self.get_matching_facts(ViolenceBehavior):
+            behavior = self.facts[fact_id]["behavior_type"]
+            if behavior == "pressao_tarefas":
+                behaviors.append(behavior)
+        
+        if behaviors:
+            facts_used["behavior"] = behaviors
+            
+        # Verificar características do alvo
+        targets = []
+        for fact_id in self.get_matching_facts(TargetFact):
+            target = self.facts[fact_id]["characteristic"]
+            if target == "genero":
+                targets.append(target)
+        
+        if targets:
+            facts_used["target"] = targets
+            
+        # Verificar contexto identificado
+        contexts = []
+        for fact_id in self.get_matching_facts(ContextFact):
+            context = self.facts[fact_id]["location"]
+            if context == "local_trabalho":
+                contexts.append(context)
+        
+        if contexts:
+            facts_used["context"] = contexts
+            
+        reasoning = "O assédio moral baseado em gênero no ambiente de trabalho constitui uma forma de discriminação institucionalizada que prejudica o desenvolvimento profissional da vítima e viola seus direitos trabalhistas."
+        
+        self.create_classification(
+            "assedio_moral_genero", 
+            None, 
+            facts_used=facts_used,
+            reasoning=reasoning
+        )
 
     # VIOLÊNCIA SEXUAL
 
@@ -253,9 +413,26 @@ class ViolenceRules(KnowledgeEngine):
         )
     )
     def detect_assedio_sexual(self):
-        self.create_classification("violencia_sexual", "assedio_sexual", [
-            "Identificado comportamento de natureza sexual não consentido"
-        ])
+        facts_used = {}
+        
+        # Verificar comportamentos identificados
+        behaviors = []
+        for fact_id in self.get_matching_facts(ViolenceBehavior):
+            behavior = self.facts[fact_id]["behavior_type"]
+            if behavior == "natureza_sexual_nao_consentido":
+                behaviors.append(behavior)
+        
+        if behaviors:
+            facts_used["behavior"] = behaviors
+            
+        reasoning = "O assédio sexual viola a dignidade e liberdade sexual da vítima, criando um ambiente hostil e constrangedor, podendo configurar crime conforme a Lei nº 10.224/2001."
+        
+        self.create_classification(
+            "violencia_sexual", 
+            "assedio_sexual", 
+            facts_used=facts_used,
+            reasoning=reasoning
+        )
 
     @Rule(
         ProcessingPhase(phase="analysis"),
@@ -267,21 +444,85 @@ class ViolenceRules(KnowledgeEngine):
         )
     )
     def detect_importunacao_sexual(self):
-        self.create_classification("violencia_sexual", "importunacao_sexual", [
-            "Identificado contato físico não consentido ou ato obsceno"
-        ])
+        facts_used = {}
+        
+        # Verificar comportamentos identificados
+        behaviors = []
+        for fact_id in self.get_matching_facts(ViolenceBehavior):
+            behavior = self.facts[fact_id]["behavior_type"]
+            if behavior in ["contato_fisico_nao_consentido", "ato_obsceno"]:
+                behaviors.append(behavior)
+        
+        if behaviors:
+            facts_used["behavior"] = behaviors
+        
+        # Verificar contexto, se presente
+        contexts = []
+        for fact_id in self.get_matching_facts(ContextFact):
+            contexts.append(self.facts[fact_id]["location"])
+        
+        if contexts:
+            facts_used["context"] = contexts
+        
+        # Verificar relacionamento, se presente
+        relationships = []
+        for fact_id in self.get_matching_facts(RelationshipFact):
+            relationships.append(self.facts[fact_id]["type"])
+        
+        if relationships:
+            facts_used["relationship"] = relationships
+        
+        reasoning = "A importunação sexual constitui crime previsto no artigo 215-A do Código Penal, incluindo toques corporais não consentidos e atos libidinosos em ambiente público, com pena de reclusão de 1 a 5 anos."
+        
+        self.create_classification(
+            "violencia_sexual", 
+            "importunacao_sexual", 
+            facts_used=facts_used,
+            reasoning=reasoning
+        )
 
     @Rule(
         ProcessingPhase(phase="analysis"),
         OR(
             ViolenceBehavior(behavior_type="coercao_sexual"),
             KeywordFact(category="action_type", keyword="coercao_sexual")
+        ),
+        OR(
+            ImpactFact(type="medo_inseguranca"),
+            KeywordFact(category="impact", keyword="medo_inseguranca")
         )
     )
     def detect_estupro(self):
-        self.create_classification("violencia_sexual", "estupro", [
-            "Identificado comportamento de coerção sexual ou relação não consentida"
-        ])
+        facts_used = {}
+        
+        # Verificar comportamentos identificados
+        behaviors = []
+        for fact_id in self.get_matching_facts(ViolenceBehavior):
+            behavior = self.facts[fact_id]["behavior_type"]
+            if behavior == "coercao_sexual":
+                behaviors.append(behavior)
+        
+        if behaviors:
+            facts_used["behavior"] = behaviors
+            
+        # Verificar impactos identificados
+        impacts = []
+        for fact_id in self.get_matching_facts(ImpactFact):
+            impact = self.facts[fact_id]["type"]
+            if impact == "medo_inseguranca":
+                impacts.append(impact)
+        
+        if impacts:
+            facts_used["impact"] = impacts
+            
+        reasoning = "A coerção sexual que gera medo e insegurança pode configurar estupro (art. 213 do Código Penal), crime hediondo que requer denúncia imediata às autoridades e atendimento especializado à vítima."
+        
+        self.create_classification(
+            "violencia_sexual", 
+            "estupro", 
+            facts_used=facts_used,
+            reasoning=reasoning
+        )
 
     # GORDOFOBIA
 
@@ -364,9 +605,26 @@ class ViolenceRules(KnowledgeEngine):
         )
     )
     def detect_exposicao_nao_consentida(self):
-        self.create_classification("violencia_digital", "exposicao_nao_consentida", [
-            "Identificada exposição não consentida de conteúdo pessoal"
-        ])
+        facts_used = {}
+        
+        # Verificar comportamentos identificados
+        behaviors = []
+        for fact_id in self.get_matching_facts(ViolenceBehavior):
+            behavior = self.facts[fact_id]["behavior_type"]
+            if behavior == "exposicao_conteudo":
+                behaviors.append(behavior)
+        
+        if behaviors:
+            facts_used["behavior"] = behaviors
+            
+        reasoning = "A exposição não consentida de conteúdo íntimo configura crime conforme a Lei nº 13.718/2018, com pena de reclusão de 1 a 5 anos, requerendo registro de Boletim de Ocorrência em Delegacia Especializada de Crimes Digitais."
+        
+        self.create_classification(
+            "violencia_digital", 
+            "exposicao_nao_consentida", 
+            facts_used=facts_used,
+            reasoning=reasoning
+        )
 
     # DISCRIMINAÇÃO RELIGIOSA
 
@@ -451,10 +709,36 @@ class ViolenceRules(KnowledgeEngine):
         )
     )
     def detect_discriminacao_racial_direta(self):
-        self.create_classification("discriminacao_racial", "ofensa_direta", [
-            "Identificado insulto ou comentário pejorativo",
-            "Direcionado à raça/etnia da vítima"
-        ])
+        facts_used = {}
+        
+        # Verificar comportamentos identificados
+        behaviors = []
+        for fact_id in self.get_matching_facts(ViolenceBehavior):
+            behavior = self.facts[fact_id]["behavior_type"]
+            if behavior in ["insulto", "piadas_estereotipos"]:
+                behaviors.append(behavior)
+        
+        if behaviors:
+            facts_used["behavior"] = behaviors
+            
+        # Verificar características do alvo
+        targets = []
+        for fact_id in self.get_matching_facts(TargetFact):
+            target = self.facts[fact_id]["characteristic"]
+            if target == "raca_etnia":
+                targets.append(target)
+        
+        if targets:
+            facts_used["target"] = targets
+            
+        reasoning = "A discriminação racial direta por meio de insultos ou estereótipos configura crime de racismo ou injúria racial, conforme a Lei 7.716/89 e art. 140 do Código Penal, sendo inafiançável e imprescritível."
+        
+        self.create_classification(
+            "discriminacao_racial", 
+            "ofensa_direta", 
+            facts_used=facts_used,
+            reasoning=reasoning
+        )
 
     @Rule(
         ProcessingPhase(phase="analysis"),
@@ -507,14 +791,16 @@ class ViolenceRules(KnowledgeEngine):
         ])
 
     # Método para criar classificações
-    def create_classification(self, violence_type, subtype=None, explanations=None):
+    def create_classification(self, violence_type, subtype=None, explanations=None, facts_used=None, reasoning=None):
         """
-        Cria uma classificação de violência.
+        Cria uma classificação de violência com explicações detalhadas.
         
         Args:
             violence_type: Tipo principal de violência
             subtype: Subtipo de violência (opcional)
-            explanations: Lista de explicações sobre a classificação (opcional)
+            explanations: Lista de explicações básicas (opcional)
+            facts_used: Dicionário dos fatos que dispararam a regra (opcional)
+            reasoning: Explicação adicional do raciocínio (opcional)
         """
         # Garantir que subtype nunca seja None para consistência
         subtype = subtype or ""
@@ -528,11 +814,26 @@ class ViolenceRules(KnowledgeEngine):
         
         # Armazenar explicações, evitando duplicações
         key = f"{violence_type}_{subtype}" if subtype else violence_type
-        if explanations:
+        
+        # Se temos fatos usados, gerar explicação detalhada
+        if facts_used:
+            rule_name = inspect.currentframe().f_back.f_code.co_name
+            conclusion = f"{violence_type}" + (f" do tipo {subtype}" if subtype else "")
+            detailed_explanations = self.format_detailed_explanation(rule_name, facts_used, conclusion, reasoning)
+            
             if key not in self.explanations:
                 self.explanations[key] = []
-            
-            # Adicionar apenas explicações que ainda não existem
+                
+            # Adicionar explicações detalhadas
+            for explanation in detailed_explanations:
+                if explanation not in self.explanations[key]:
+                    self.explanations[key].append(explanation)
+        # Caso contrário, usar explicações simples fornecidas
+        elif explanations:
+            if key not in self.explanations:
+                self.explanations[key] = []
+                
+            # Adicionar explicações simples
             for explanation in explanations:
                 if explanation not in self.explanations[key]:
                     self.explanations[key].append(explanation)
@@ -644,3 +945,64 @@ class ViolenceRules(KnowledgeEngine):
         # Chamar o reset original
         super().reset()
         print("🔄 Motor de regras reiniciado completamente")
+
+    def format_detailed_explanation(self, rule_name, facts_used, conclusion, reasoning=None):
+        """
+        Gera uma explicação detalhada em linguagem natural baseada nos fatos que ativaram a regra.
+        
+        Args:
+            rule_name: Nome da regra ativada
+            facts_used: Dicionário dos fatos relevantes que ativaram a regra
+            conclusion: A conclusão alcançada pela regra
+            reasoning: Explicação adicional do raciocínio (opcional)
+        """
+        basic_explanation = []
+        detailed_explanation = []
+        
+        # Criar explicação básica
+        basic_explanation.append(f"Identificado: {conclusion}")
+        
+        # Construir uma explicação detalhada baseada nos fatos utilizados
+        detailed_explanation.append(f"**Como chegamos a esta conclusão:**")
+        
+        # Explicar os comportamentos identificados
+        if 'behavior' in facts_used:
+            behaviors = facts_used['behavior']
+            behavior_text = ", ".join(behaviors) if len(behaviors) > 1 else behaviors[0]
+            detailed_explanation.append(f"- Identificamos em seu relato comportamentos de {behavior_text}")
+        
+        # Explicar o contexto, se houver
+        if 'context' in facts_used:
+            contexts = facts_used['context']
+            context_text = ", ".join(contexts) if len(contexts) > 1 else contexts[0]
+            detailed_explanation.append(f"- O incidente ocorreu em um contexto de {context_text}")
+        
+        # Explicar a frequência, se houver
+        if 'frequency' in facts_used:
+            frequencies = facts_used['frequency']
+            freq_text = ", ".join(frequencies) if len(frequencies) > 1 else frequencies[0]
+            detailed_explanation.append(f"- O comportamento ocorre {freq_text}")
+        
+        # Explicar as características do alvo, se houver
+        if 'target' in facts_used:
+            targets = facts_used['target']
+            target_text = ", ".join(targets) if len(targets) > 1 else targets[0]
+            detailed_explanation.append(f"- O comportamento foi direcionado com base em {target_text}")
+        
+        # Explicar o relacionamento, se houver
+        if 'relationship' in facts_used:
+            relationships = facts_used['relationship']
+            rel_text = ", ".join(relationships) if len(relationships) > 1 else relationships[0]
+            detailed_explanation.append(f"- Existe uma relação de {rel_text} entre as partes envolvidas")
+        
+        # Explicar o impacto, se houver
+        if 'impact' in facts_used:
+            impacts = facts_used['impact']
+            impact_text = ", ".join(impacts) if len(impacts) > 1 else impacts[0]
+            detailed_explanation.append(f"- O comportamento causou {impact_text}")
+        
+        # Adicionar raciocínio específico se fornecido
+        if reasoning:
+            detailed_explanation.append(f"\n**Por que isso é importante:** {reasoning}")
+        
+        return basic_explanation + detailed_explanation

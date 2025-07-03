@@ -5,7 +5,6 @@ import json
 from knowledge_base.keywords_dictionary import KEYWORDS_DICT, FIELDS_QUESTIONS
 from utils.groq_integration import GroqAPI
 
-# Importar fatos do Experta para criar objetos compatíveis com o motor de regras
 from engine.facts import (
     TextRelato, KeywordFact, ViolenceBehavior, ContextFact, FrequencyFact,
     TargetFact, RelationshipFact, ImpactFact, create_facts_from_groq_response
