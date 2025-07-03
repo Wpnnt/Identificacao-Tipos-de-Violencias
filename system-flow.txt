@@ -6,12 +6,16 @@
     ↓
 [SISTEMA] → Recebe JSON de resposta e converte em fatos para o motor de inferência
     ↓
-[SISTEMA] → Verifica se há informações faltantes críticas
+[SISTEMA] → Insere fatos no motor de regras (fase de coleta)
     ↓
-[SISTEMA] → Se necessário, solicita ao Grok que formule perguntas específicas
+[SISTEMA] → Aciona a transição para a fase de análise no motor
     ↓
-[USUÁRIO] → Responde às perguntas complementares
+[SISTEMA] → Motor de regras dispara regras aplicáveis com base nos fatos
     ↓
-[SISTEMA] → Repete o ciclo até ter dados suficientes para classificação confiável
+[SISTEMA] → Cada regra gera classificações de violência com explicações detalhadas
     ↓
-[SISTEMA] → Apresenta classificação final com explicações e recomendações
+[SISTEMA] → Motor consolida resultados e seleciona o tipo principal
+    ↓
+[SISTEMA] → Apresenta classificação final com explicações e recomendações específicas
+    ↓
+[USUÁRIO] → Pode iniciar nova análise se desejar
