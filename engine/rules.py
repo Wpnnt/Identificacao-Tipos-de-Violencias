@@ -99,16 +99,13 @@ class ViolenceRules(KnowledgeEngine):
     @Rule(
         OR(
             ViolenceBehavior(behavior_type="perseguicao"),
-            ViolenceBehavior(behavior_type="vigilancia"),
-            KeywordFact(category="action_type", keyword="perseguicao"),
-            KeywordFact(category="action_type", keyword="vigilancia"),
-            KeywordFact(category="action_type", keyword="stalking")
+            KeywordFact(category="action_type", keyword="perseguicao")
         )
     )
     def detect_perseguicao(self):
         """Detecta comportamento de perseguição."""
         self.create_classification("perseguicao", None, [
-            "Identificado comportamento de perseguição ou vigilância constante"
+            "Identificado comportamento de perseguição"
         ])
     
     @Rule(
@@ -201,8 +198,7 @@ class ViolenceRules(KnowledgeEngine):
             KeywordFact(category="action_type", keyword="humilhacao")
         ),
         OR(
-            RelationshipFact(type="superior_hierarquico"),
-            KeywordFact(category="relationship", keyword="superior_hierarquico")
+            RelationshipFact(type="relacao_hierarquica"),
         )
     )
     def detect_abuso_psicologico_hierarquico(self):
@@ -267,9 +263,7 @@ class ViolenceRules(KnowledgeEngine):
     @Rule(
         OR(
             ViolenceBehavior(behavior_type="coercao_sexual"),
-            KeywordFact(category="action_type", keyword="coercao_sexual"),
-            KeywordFact(category="action_type", keyword="estupro"),
-            KeywordFact(category="action_type", keyword="abuso")
+            KeywordFact(category="action_type", keyword="coercao_sexual")
         )
     )
     def detect_estupro(self):
@@ -342,15 +336,13 @@ class ViolenceRules(KnowledgeEngine):
     @Rule(
         OR(
             ViolenceBehavior(behavior_type="cyberbullying"),
-            ViolenceBehavior(behavior_type="mensagens_ofensivas"),
-            KeywordFact(category="action_type", keyword="cyberbullying"),
-            KeywordFact(category="action_type", keyword="mensagens_ofensivas")
+            KeywordFact(category="action_type", keyword="cyberbullying")
         )
     )
     def detect_cyberbullying(self):
         """Detecta cyberbullying."""
         self.create_classification("violencia_digital", "cyberbullying", [
-            "Identificado comportamento de cyberbullying ou mensagens ofensivas"
+            "Identificado comportamento de cyberbullying"
         ])
     
     @Rule(
@@ -438,10 +430,8 @@ class ViolenceRules(KnowledgeEngine):
         OR(
             ViolenceBehavior(behavior_type="insulto"),
             ViolenceBehavior(behavior_type="piadas_estereotipos"),
-            ViolenceBehavior(behavior_type="xingamento"),  # Adicionado xingamento
             KeywordFact(category="action_type", keyword="insulto"),
-            KeywordFact(category="action_type", keyword="piadas_estereotipos"),
-            KeywordFact(category="action_type", keyword="xingamento")  # Adicionado xingamento
+            KeywordFact(category="action_type", keyword="piadas_estereotipos")
         ),
         OR(
             TargetFact(characteristic="raca_etnia"),
@@ -458,25 +448,18 @@ class ViolenceRules(KnowledgeEngine):
 
     @Rule(
         OR(
-            ViolenceBehavior(behavior_type="ofensa"),
-            KeywordFact(category="action_type", keyword="ofensa"),
-            KeywordFact(category="action_type", keyword="insulto_racial"),
-            KeywordFact(category="action_type", keyword="ofensa")
+            KeywordFact(category="action_type", keyword="insulto_racial")
         ),
         OR(
             TargetFact(characteristic="raca_etnia"),
-            KeywordFact(category="target", keyword="raca_etnia"),
-            TargetFact(characteristic="negro"),
-            KeywordFact(category="target", keyword="negro"),
-            TargetFact(characteristic="cor da pele"),
-            KeywordFact(category="target", keyword="cor da pele")
+            KeywordFact(category="target", keyword="raca_etnia")
         )
     )
     def detect_discriminacao_racial_ofensa(self):
         """Detecta discriminação racial por ofensa direta."""
         self.create_classification("discriminacao_racial", "ofensa_direta", [
             "Identificada ofensa verbal de natureza racial",
-            "Direcionada à raça/etnia/cor da vítima"
+            "Direcionada à raça/etnia da vítima"
         ])
         
     # Método simplificado para criar classificações
