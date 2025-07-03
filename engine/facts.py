@@ -1,49 +1,48 @@
-from experta import Fact, Field  # ✅ CORREÇÃO PRINCIPAL: importar do experta diretamente
+from experta import Fact, Field
 from knowledge_base.violence_types import VIOLENCE_TYPES, SEVERITY_LEVEL, REPORT_CONTACT
 from knowledge_base.confidence_levels import *
 import streamlit as st  # type: ignore
 
-# Definição dos fatos usando Field para declarar os atributos
 class TextRelato(Fact):
-    text = Field(str, default=None)
+    text = Field(str, mandatory=True)
     processed = Field(bool, default=False)
 
 class KeywordFact(Fact):
-    category = Field(str, default=None)
-    keyword = Field(str, default=None)
+    category = Field(str, mandatory=True)
+    keyword = Field(str, mandatory=True)
     confidence = Field(float, default=1.0)
 
 class ViolenceBehavior(Fact):
-    behavior_type = Field(str, default=None)
+    behavior_type = Field(str, mandatory=True)
 
 class ContextFact(Fact):
-    location = Field(str, default=None)
+    location = Field(str, mandatory=True)
 
 class FrequencyFact(Fact):
-    value = Field(str, default=None)
+    value = Field(str, mandatory=True)
 
 class TargetFact(Fact):
-    characteristic = Field(str, default=None)
+    characteristic = Field(str, mandatory=True)
 
 class RelationshipFact(Fact):
-    type = Field(str, default=None)
+    type = Field(str, mandatory=True)
 
 class ImpactFact(Fact):
-    type = Field(str, default=None)
+    type = Field(str, mandatory=True)
 
 class ViolenceRelact(Fact):
-    action_type = Field(str, default=None)
-    frequency = Field(str, default=None)
-    context = Field(str, default=None)
-    target = Field(str, default=None)
-    relationship = Field(str, default=None)
-    impact = Field(str, default=None)
+    action_type = Field(str, mandatory=True)
+    frequency = Field(str, mandatory=True)
+    context = Field(str, mandatory=True)
+    target = Field(str, mandatory=True)
+    relationship = Field(str, mandatory=True)
+    impact = Field(str, mandatory=True)
     weight = Field(int, default=0)
     confidence = Field(float, default=0.0)
 
 class ViolenceClassification(Fact):
-    violence_type = Field(str, default=None)
-    subtype = Field(str, default=None)
+    violence_type = Field(str, mandatory=True)
+    subtype = Field(str, default="")
     confidence_level = Field(float, default=0.0)
     score = Field(int, default=0)
     explanation = Field(list, default=[])
@@ -54,8 +53,6 @@ class AnalysisResult(Fact):
     multiple_types = Field(bool, default=False)
     ambiguity_level = Field(float, default=0.0)
 
-
-# Funções auxiliares (mantidas)
 def create_facts_from_groq_response(response):
     facts = []
     if "identified_keywords" in response and response["identified_keywords"]:

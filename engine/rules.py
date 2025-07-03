@@ -435,28 +435,53 @@ class ViolenceRules(KnowledgeEngine):
     
     # REGRA PARA CONSOLIDAR RESULTADOS
     
+    def run(self, steps=None):
+        """
+        Executa o motor e consolida os resultados automaticamente.
+        
+        Sobrescreve o método run() da classe KnowledgeEngine para
+        garantir que os resultados sejam consolidados automaticamente
+        após todas as regras serem executadas.
+        
+        Args:
+            steps: Número máximo de regras a executar (opcional)
+        """
+        # Garantir que steps seja um valor inteiro válido antes de passar para super().run()
+        steps_value = -1 if steps is None else steps  # -1 executa até o fim
+        
+        # Chamar a implementação original do KnowledgeEngine com um valor numérico válido
+        super().run(steps_value)
+        
+        # Consolidar resultados automaticamente após a execução
+        print("\n🔄 Consolidando resultados automaticamente...")
+        self.consolidate_results()
+
     def consolidate_results(self):
         """
         Consolida os resultados de todas as classificações.
-        
-        Esta regra é disparada após todas as classificações individuais
-        terem sido processadas. Ela resolve ambiguidades e cria um resultado
-        final de análise.
         """
-
         all_classifications = []
         for fact_id in self.get_matching_facts(ViolenceClassification):
             fact = self.facts[fact_id]
             all_classifications.append({
                 "violence_type": fact["violence_type"],
-                "subtype": fact["subtype"],
+                "subtype": fact["subtype"] or "",  # Garantir que subtype nunca seja None
                 "score": fact["score"],
                 "confidence": fact["confidence_level"],
                 "explanation": self.get_explanation(fact["violence_type"], fact["subtype"])
             })
         
+        # Mesmo que não haja classificações, criar um resultado vazio para evitar erros
         if not all_classifications:
-            print("⚠️ Nenhuma classificação identificada")
+            print("⚠️ Nenhuma classificação identificada, criando resultado vazio")
+            self.declare(
+                AnalysisResult(
+                    classifications=[],
+                    primary_result={"violence_type": "", "subtype": "", "confidence": 0.0},
+                    multiple_types=False,
+                    ambiguity_level=0.0
+                )
+            )
             return
 
         report_multiple, ambiguity_level = should_report_multiple(all_classifications)
@@ -480,28 +505,27 @@ class ViolenceRules(KnowledgeEngine):
             print(f"- Todas as classificações: {len(all_classifications)}")
             for c in all_classifications:
                 print(f"  • {c['violence_type']}{' - ' + c['subtype'] if c.get('subtype') else ''} ({c['confidence']:.2f})")
-    
+
     # MÉTODOS AUXILIARES
     
     def add_score(self, violence_type, subtype, score, explanations=None):
         """
         Adiciona pontuação a um tipo/subtipo de violência.
-        
-        Args:
-            violence_type: Tipo principal de violência
-            subtype: Subtipo (se aplicável)
-            score: Pontuação a adicionar
-            explanations: Lista de explicações sobre por que a pontuação foi adicionada
         """
+        # Garantir que subtype nunca seja None
+        subtype = subtype or ""
+
         # Gerar chave única para este tipo/subtipo
         key = f"{violence_type}_{subtype}" if subtype else violence_type
         
         # Verificar se já existe uma classificação para este tipo/subtipo
-        existing = None
+        existing_fact_id = None
+        existing_fact = None
         for fact_id in self.get_matching_facts(ViolenceClassification):
             fact = self.facts[fact_id]
             if fact["violence_type"] == violence_type and fact["subtype"] == subtype:
-                existing = fact_id
+                existing_fact_id = fact_id
+                existing_fact = fact
                 break
         
         # Armazenar explicações
@@ -514,12 +538,38 @@ class ViolenceRules(KnowledgeEngine):
         threshold = get_threshold(violence_type, subtype)
         max_score = get_max_score(violence_type, subtype)
         
-        if existing:
+        if existing_fact_id is not None:
             # Atualizar classificação existente
-            fact = self.facts[existing]
-            new_score = fact["score"] + score
+            new_score = existing_fact["score"] + score
             confidence = calculate_confidence(new_score, threshold, max_score)
-            self.modify(existing, score=new_score, confidence_level=confidence)
+            
+            # Em vez de modificar, criar um novo fato e remover o antigo
+            # Este é um workaround para o problema com modify()
+            try:
+                # Remover o fato antigo do dicionário
+                del self.facts[existing_fact_id]
+                
+                # Declarar um novo fato com valores atualizados
+                self.declare(
+                    ViolenceClassification(
+                        violence_type=violence_type,
+                        subtype=subtype,
+                        score=new_score,
+                        confidence_level=confidence
+                    )
+                )
+            except Exception as e:
+                print(f"⚠️ Erro ao atualizar classificação: {e}")
+                # Se falhar, simplesmente declaramos um novo
+                self.declare(
+                    ViolenceClassification(
+                        violence_type=violence_type,
+                        subtype=subtype,
+                        score=new_score,
+                        confidence_level=confidence
+                    )
+                )
+            
             print(f"📊 Atualizado {key}: score={new_score}, confiança={confidence:.2f}")
         else:
             # Criar nova classificação
@@ -547,3 +597,16 @@ class ViolenceRules(KnowledgeEngine):
         """
         key = f"{violence_type}_{subtype}" if subtype else violence_type
         return self.explanations.get(key, [])
+    
+    def get_matching_facts(self, fact_type):
+        """
+        Retorna os IDs dos fatos que correspondem ao tipo especificado.
+        
+        Args:
+            fact_type: O tipo de fato a ser buscado
+            
+        Returns:
+            List: Lista dos IDs de fatos do tipo especificado
+        """
+        return [fact_id for fact_id, fact in self.facts.items() 
+                if isinstance(fact, fact_type)]
