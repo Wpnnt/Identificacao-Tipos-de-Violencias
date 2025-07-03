@@ -25,10 +25,13 @@ class ExpertSystem:
         for fact in facts:
             self.engine.declare(fact)
         
-        # 4. Executar o motor (que já consolida os resultados no final)
+        # 4. Executar o método de debug para verificar fatos
+        self.engine.debug_facts()
+        
+        # 5. Executar o motor (que já consolida os resultados no final)
         self.engine.run()
         
-        # 5. Coletar resultados
+        # 6. Coletar resultados
         results = self._collect_results()
         
         return results
