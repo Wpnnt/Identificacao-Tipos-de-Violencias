@@ -1,3 +1,10 @@
+import collections
+import frozendict
+
+# Corrigir collections.Mapping para funcionar com Python >=3.10
+if not hasattr(collections, "Mapping"):
+    import collections.abc
+    collections.Mapping = collections.abc.Mapping
 import os
 import streamlit as st # type: ignore
 from engine.expert_system import ExpertSystem
