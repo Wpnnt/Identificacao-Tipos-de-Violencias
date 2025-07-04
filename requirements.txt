@@ -1,4 +1,4 @@
 streamlit
 experta
 requests
-frozendict>=1.2
+frozendict
